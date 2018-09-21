@@ -1,5 +1,7 @@
 import traceback
 
+import create_employee_script
+import fireCessGen
 from config import config, load_config
 
 import PTBoundaryGen
@@ -12,17 +14,29 @@ from processing import PTDBScript
 cities = ["Alawalpur"]
 cities = ["Dasuya", "Handiaya", "Lalru", "Shahkot", "SultanpurLodhi", "Adampur", "Alawalpur", "Arniwala", "BassiPathana", "Bhogpur", "Dasuya", "Dharamkot", "Garhshankar", "Hariana", "Khanauri", "LohianKhas", "Mahilpur", "Makhu", "Mallanwala", "Mudki", "ShamChurasi", "Sunam", "Talwara", "Tapa", "UrmarTanda", "Zirakpur"]
 
-cities = ["Shahkot", "Handiaya", "Lalru", "Dasuya", "Sultanpur Lodhi"]
+cities = ["Shahkot", "Handiaya", "Lalru", "Dasuya", "Sultanpur Lodhi", "Zirakpur"]
 
-cities = ["Testing"]
+# cities = ["Testing"]
+
+cities = ["Sultanpur Lodhi"]
 
 for city in cities[:]:
     try:
         config.CITY_NAME = city.replace(" ", "")
         load_config()
+
+        step = "Generating Employee data"
+        print(step)
+        employeeGen.main()
+
+        # create_employee_script.main()
         step = "Generating tenant data"
         print(step)
         tenantGen.main()
+
+        step = "Generating firecess config"
+        print(step)
+        fireCessGen.main()
 
         step = "Generating department data"
         print(step)

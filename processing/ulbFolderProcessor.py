@@ -2,7 +2,7 @@ from os import path
 import os
 from shutil import copyfile
 
-for f in os.scandir("/Users/tarunlalwani/Downloads/PT-Final Data for Roll-out/Data/Pilot ULBs data"):
+for f in os.scandir("/Users/tarunlalwani/Downloads/PT-Final Data for Roll-out/Data/Other ULBs Data_without Fire Cess"):
     if path.isdir(f.path):
         tenant_id = f.name.replace(" ","").lower()
         new_path = "../logos/pb.{}".format(tenant_id)

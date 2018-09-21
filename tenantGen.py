@@ -31,6 +31,7 @@ def main():
     INDEX_TENANT_ADDRESS = "Address"
     INDEX_TENANT_FB = "FB Link"
     INDEX_TENANT_TWITTER = "Twitter Link"
+    INDEX_TENANT_GRADE = "Grade"
 
     # ° N
     # ° E
@@ -43,6 +44,7 @@ def main():
     district_code = fix_value(tenant.iloc[0][get_column_index(tenant, INDEX_TENANT_DISTRICTCODE)])
     region_name = fix_value(tenant.iloc[0][get_column_index(tenant, INDEX_TENANT_REGIONNAME)])
 
+    grade = fix_value(tenant.iloc[0][get_column_index(tenant, INDEX_TENANT_GRADE)])
     lat = float(fix_value(tenant.iloc[0][get_column_index(tenant, INDEX_TENANT_LATITUDE)]))
     long = float(fix_value(tenant.iloc[0][get_column_index(tenant, INDEX_TENANT_LONGITUDE)]))
     contact = fix_value(tenant.iloc[0][get_column_index(tenant, INDEX_TENANT_CONTACT)])

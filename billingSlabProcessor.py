@@ -19,7 +19,7 @@ review_headers = ["PropertyType", "UsageCategoryMajor", "UsageCategoryMinor", "U
 
 from common import *
 
-TAB_NAME = 'Category C'
+TAB_NAME = 'Category B'
 
 dfs, wks = open_google_spreadsheet(
     "https://docs.google.com/spreadsheets/d/1Grd20oHLoC4B5DfuMY8Yud31w7uKY09gM22E2LbH3cs/edit?ts=5b8e2d98#gid=771025646",
@@ -118,7 +118,7 @@ def fix_row(row):
 
 for row in level1_rows:
     fix_row(row)
-    if row["OccupancyType"] == "RENTED":
+    if row["OccupancyType"] == "RENTED" and row["UsageCategoryMajor"] != "RESIDENTIAL":
         if row["isPropertyMultiFloored"] == "TRUE" and row["FromFloor"] == "0" and row["ToFloor"] == "0":
             row["FromFloor"] = -10
             row["ToFloor"] = 31
@@ -136,7 +136,11 @@ for row in level1_rows:
             row["ToFloor"] = 31
             row["unBuiltUnitRate"] = row["unitRate"]
 
-    if row["PropertySubType"] == "INDEPENDENTPROPERTY" and row["isPropertyMultiFloored"] == "TRUE":
+    if row["UsageCategoryDetail"] == "MARRIAGEPALACE":
+        row["unBuiltUnitRate"] = row["unitRate"]
+
+    if row["PropertySubType"] != "SHAREDPROPERTY" and ((row["PropertySubType"] == "INDEPENDENTPROPERTY" and row["isPropertyMultiFloored"] == "TRUE")\
+            or (row["OccupancyType"] == "RENTED" and row["UsageCategoryMajor"] == "RESIDENTIAL"  and row["FromFloor"] == "0" and row["ToFloor"] == "0")):
         lower_floors = copy.deepcopy(row)
         upper_floors = copy.deepcopy(row)
 

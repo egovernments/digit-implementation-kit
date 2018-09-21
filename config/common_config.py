@@ -1,5 +1,6 @@
 from .local import *
 
+
 def load_config():
     config.GOOGLE_AUTH_CONFIG = 'SpreadSheetDBService-2be6caceda84.json'
 
@@ -32,7 +33,6 @@ def load_admin_boundary_config():
     config.SHEET_WARDS = "Admin Block"
     config.SHEET_LOCALITY = "Locality"
 
-
     config.COLUMN_WARD_CODE = "Block/Ward Code"
     config.COLUMN_WARD_NAME = "Block/Ward Name"
     config.COLUMN_WARD_ADMIN_ZONE_NAME = "Admin Zone Name"
@@ -62,5 +62,6 @@ def load_revenue_boundary_config():
     config.COLUMN_LOCALITY_NAME = "Locality Name"
     config.COLUMN_LOCALITY_ADMIN_BLOCK = "Rev Block/Ward Name"
     config.COLUMN_LOCALITY_AREA = "Area Name"
+
 
 load_config()

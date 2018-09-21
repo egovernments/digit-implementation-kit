@@ -1,6 +1,6 @@
 import requests
 import csv
-from pathlib import Path
+
 from common import superuser_login
 from config import config
 
@@ -8,7 +8,7 @@ from config import config
 def main():
     city = config.CITY_NAME
 
-    sheets = Path("employees")
+    sheets = config.BASE_PPATH / "employees"
     sheet_name = sheets / (city.lower() + ".csv")
     tenant_id = "pb." + city.lower()
 

@@ -1,8 +1,11 @@
-activate = True
+activate = False
 
-tenants = ["nawanshahr", "sangrur"]
-module = "PGR"
-# module = "PT"
+tenants = ["testing"]
+
+# tenants = ["Shahkot", "Handiaya", "Lalru", "Dasuya", "Sultanpur Lodhi", "Zirakpur"]
+
+# module = "PGR"
+module = "PT"
 
 import json
 from config import config
@@ -18,7 +21,7 @@ for m in data["citymodule"]:
 
 if found:
     for tenant in tenants:
-        tenant = "pb." + tenant.lower()
+        tenant = "pb." + tenant.lower().replace(" ", "")
         found = False
         for i, et in enumerate(m["tenants"]):
             if et["code"] == tenant:
