@@ -1,8 +1,9 @@
-activate = False
+activate = True
 
 tenants = ["testing"]
 
 # tenants = ["Shahkot", "Handiaya", "Lalru", "Dasuya", "Sultanpur Lodhi", "Zirakpur"]
+tenants =  ["Adampur", "Alawalpur", "Bassi Pathana", "Bhogpur", "Hariana", "Sham Churasi", "Sunam", "Urmar Tanda"]
 
 # module = "PGR"
 module = "PT"

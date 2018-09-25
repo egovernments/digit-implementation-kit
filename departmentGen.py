@@ -30,6 +30,11 @@ def main():
     deps_existing = json.load(open(config.MDMS_DEPARTMENT_JSON))
 
     existing_departments = set()
+    existing_departments.add(clean_name("Engineering Branch(Civil) - for Buildings and Roads"))
+    dep_map[clean_name("Engineering Branch(Civil) - for Buildings and Roads")] = "Engineering Branch (Civil - B&R)"
+
+    existing_departments.add(clean_name("Engineering Branch(O&M) -for Water and Sewerage"))
+    dep_map[clean_name("Engineering Branch(O&M) -for Water and Sewerage")] = "Engineering Branch (O&M - W&S)"
 
     for dep in deps_existing["Department"]:
         clean_dep_name = clean_name(dep["name"])
@@ -38,6 +43,7 @@ def main():
 
     deps_to_add = new_departments - existing_departments
     len_existing_dep = len(existing_departments)
+
 
     deps = []
 

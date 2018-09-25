@@ -73,7 +73,7 @@ def main():
             "districtCode": str(int(float(district_code))) if district_code else None,
             "districtName": district_name,
             "regionName": region_name,
-            "ulbGrade": None,
+            "ulbGrade": grade,
             "longitude": long,
             "latitude": lat,
             "shapeFileLocation": None,
@@ -81,7 +81,7 @@ def main():
             "code": str(int(float(citycode)))
         },
         "address": address,
-        "contactNumber": contact
+        "contactNumber": str(int(float(contact)))
     }
     import sys
 
