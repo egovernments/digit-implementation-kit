@@ -161,8 +161,6 @@ def validate_boundary_data(auth_token, boundary_data, boundary_type, duplicate_c
             break
 
     if not tenant_boundary:
-        errors.append("Boundary type \"{}\" is not available for tenant : \"{}\"".format(boundary_type,
-                                                                                         boundary_data["tenantId"]))
         return errors
 
     locality_map = {}
