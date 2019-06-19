@@ -191,7 +191,7 @@ def validate_boundary_data(auth_token, boundary_data, boundary_type, duplicate_c
                 # As we are adding locality code, zone name, ward name locality name against locality name
                 # So, each locality name contains atleast 3 data in the list.
                 # If size of list is more that 3 then locality name is repeated for multiple times
-                errors.append("\n\nDuplicate Locaity Name")
+                errors.append("\n\nDuplicate Locality Name")
                 errors.append("\tName : {}".format(locality_name))
                 errors.append("\tZone : {}".format(zone_n_block[1]))
                 errors.append("\tWard/Block : {}".format(zone_n_block[2]))
@@ -419,9 +419,12 @@ def create_boundary(config_function, boundary_type):
                 else:
                     existing_boundary_data["TenantBoundary"][1] = new_boundary_data
                 print("Boundary already exists. Overwriting")
+                print("File Path : ", boundary_path, "boundary-data.json")
+
         else:
             # the file doesn't exists already, so we can safely generate current boundary
             print("Boundary didn't exist. Creating one")
+            print("File Path : ", boundary_path + "boundary-data.json")
             existing_boundary_data = final_data
 
         with open(boundary_path / "boundary-data.json", "w") as f:
