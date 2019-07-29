@@ -1,53 +1,20 @@
 from os.path import dirname
-
-from xlwt import  Worksheet
+from xlwt import Worksheet
 import xlwt
-from setupkit import *
+from common import *
 
 
-def search_tl_billing_slab(auth_token):
-    tenant_id = config.TENANT_ID
-    print(tenant_id)
-    return api_call(auth_token, "/tl-calculator/billingslab/_search", {"tenantId": tenant_id})
-
-
-def search_localization(auth_token):
-    tenant_id = "pb"
-    modules = "rainmaker-tl"
-    locale = "en_IN"
-    return api_call(auth_token, "/localization/messages/v1/_search",
-                    {"tenantId": tenant_id, "modules": modules, "locale": locale})
-
-
-def search_mdms_data(tenant_id, auth_token):
-    return api_call(auth_token, "/egov-mdms-service/v1/_search", tenant_id, "MdmsCriteria", {
-        "tenantId": "pb",
-        "moduleDetails": [
-            {
-                "moduleName": "TradeLicense",
-                "masterDetails": [
-                    {
-                        "name": "TradeType"
-                    },
-                    {
-                        "name": "AccessoriesCategory"
-                    }
-                ]
-            }
-        ]
-    })
-
-
-def get_accessories_from_mdms_data(tenant_id, auth_token):
-    accessories_types = search_mdms_data(tenant_id, auth_token)["MdmsRes"]["TradeLicense"]["AccessoriesCategory"]
+def get_accessories_from_mdms(auth_token):
+    accessories_types = mdms_call(auth_token, "TradeLicense", "AccessoriesCategory")["MdmsRes"]["TradeLicense"][
+        "AccessoriesCategory"]
     trade_license_acc_code_map = {}
     for accessories_type in accessories_types:
         trade_license_acc_code_map[accessories_type["code"]] = []
     return trade_license_acc_code_map
 
 
-def get_trade_type_from_mdms_data(tenant_id, auth_token):
-    trade_types = search_mdms_data(tenant_id, auth_token)["MdmsRes"]["TradeLicense"]["TradeType"]
+def get_trade_type_from_mdms(auth_token):
+    trade_types = mdms_call(auth_token, "TradeLicense", "TradeType")["MdmsRes"]["TradeLicense"]["TradeType"]
     trade_type_code_map = {}
     for c in trade_types:
         trade_type_code_map[c["code"]] = []
@@ -55,7 +22,7 @@ def get_trade_type_from_mdms_data(tenant_id, auth_token):
 
 
 def get_billing_slab_localization(auth_token):
-    localization_data = search_localization(auth_token)["messages"]
+    localization_data = search_localization(auth_token, "rainmaker-tl", "en_IN", 'pb')["messages"]
     code_to_message_map = {}
     for loc in localization_data:
         if "TRADELICENSE_TRADETYPE" in loc["code"] or "TRADELICENSE_ACCESSORIESCATEGORY" in loc["code"]:
@@ -97,9 +64,9 @@ def download_billing_slab(auth_token):
 
     localization_map = get_billing_slab_localization(auth_token)
 
-    acc_map = get_accessories_from_mdms_data('pb', auth_token)
+    acc_map = get_accessories_from_mdms(auth_token)
 
-    trade_map = get_trade_type_from_mdms_data('pb', auth_token)
+    trade_map = get_trade_type_from_mdms(auth_token)
 
     for billing_slab in billing_slabs:
         if billing_slab["tradeType"] is not None:
@@ -107,13 +74,14 @@ def download_billing_slab(auth_token):
         elif billing_slab["accessoryCategory"] is not None:
             acc_map[billing_slab["accessoryCategory"]].append(billing_slab)
 
-    row_no = 1
+    row_trade = 1
 
     for code, slabs in trade_map.items():
         if len(slabs) != 0:
             for slab in slabs:
                 id = slab["id"]
 
+                # licence_type = "PERMANENT"
                 structure_type = slab["structureType"]
                 codes = slab["tradeType"]
                 charge = slab["rate"]
@@ -123,31 +91,31 @@ def download_billing_slab(auth_token):
 
                 trade_sub_type_name = localization_map.get(get_trade_localization_code(slab["tradeType"])) or ""
 
-                trd_acc.write(row_no, 0, row_no)
+                trd_acc.write(row_trade, 0, row_trade)
 
-                trd_acc.write(row_no, 1, id)
-                trd_acc.write(row_no, 2, "PERMANENT")
-                trd_acc.write(row_no, 3, structure_type)
-                trd_acc.write(row_no, 4, trade_sub_type_name)
-                trd_acc.write(row_no, 5, codes)
-                trd_acc.write(row_no, 8, "FLAT")
-                trd_acc.write(row_no, 9, charge)
-                trd_acc.write(row_no, 10, uom_unit)
-                trd_acc.write(row_no, 11, uom_from)
-                trd_acc.write(row_no, 12, uom_to)
+                trd_acc.write(row_trade, 1, id)
+                trd_acc.write(row_trade, 2, "PERMANENT")
+                trd_acc.write(row_trade, 3, structure_type)
+                trd_acc.write(row_trade, 4, trade_sub_type_name)
+                trd_acc.write(row_trade, 5, codes)
+                trd_acc.write(row_trade, 8, "FLAT")
+                trd_acc.write(row_trade, 9, charge)
+                trd_acc.write(row_trade, 10, uom_unit)
+                trd_acc.write(row_trade, 11, uom_from)
+                trd_acc.write(row_trade, 12, uom_to)
 
-                row_no = row_no + 1
+                row_trade = row_trade + 1
         else:
 
             trade_sub_type_name = localization_map.get(get_trade_localization_code(code)) or ""
 
-            trd_acc.write(row_no, 0, row_no)
-            trd_acc.write(row_no, 2, "PERMANENT")
-            trd_acc.write(row_no, 4, trade_sub_type_name)
-            trd_acc.write(row_no, 8, "FLAT")
-            trd_acc.write(row_no, 5, code)
+            trd_acc.write(row_trade, 0, row_trade)
+            trd_acc.write(row_trade, 2, "PERMANENT")
+            trd_acc.write(row_trade, 4, trade_sub_type_name)
+            trd_acc.write(row_trade, 8, "FLAT")
+            trd_acc.write(row_trade, 5, code)
 
-            row_no = row_no + 1
+            row_trade = row_trade + 1
 
     for code, slabs in acc_map.items():
         if len(slabs) != 0:
@@ -164,27 +132,27 @@ def download_billing_slab(auth_token):
                 accessories_name = localization_map.get(
                     get_accessories_localization_code(slab["accessoryCategory"])) or ""
 
-                trd_acc.write(row_no, 0, row_no)
-                trd_acc.write(row_no, 1, id)
-                trd_acc.write(row_no, 2, "PERMANENT")
-                trd_acc.write(row_no, 7, accessory_category_code)
-                trd_acc.write(row_no, 6, accessories_name)
-                trd_acc.write(row_no, 8, "FLAT")
-                trd_acc.write(row_no, 9, charge)
-                trd_acc.write(row_no, 10, uom_unit)
-                trd_acc.write(row_no, 11, uom_from)
-                trd_acc.write(row_no, 12, uom_to)
-                row_no = row_no + 1
+                trd_acc.write(row_trade, 0, row_trade)
+                trd_acc.write(row_trade, 1, id)
+                trd_acc.write(row_trade, 2, "PERMANENT")
+                trd_acc.write(row_trade, 7, accessory_category_code)
+                trd_acc.write(row_trade, 6, accessories_name)
+                trd_acc.write(row_trade, 8, "FLAT")
+                trd_acc.write(row_trade, 9, charge)
+                trd_acc.write(row_trade, 10, uom_unit)
+                trd_acc.write(row_trade, 11, uom_from)
+                trd_acc.write(row_trade, 12, uom_to)
+                row_trade = row_trade + 1
         else:
 
             accessories_name = localization_map.get(get_accessories_localization_code(code)) or ""
-            trd_acc.write(row_no, 0, row_no)
-            trd_acc.write(row_no, 2, "PERMANENT")
+            trd_acc.write(row_trade, 0, row_trade)
+            trd_acc.write(row_trade, 2, "PERMANENT")
 
-            trd_acc.write(row_no, 7, code)
-            trd_acc.write(row_no, 6, accessories_name)
-            trd_acc.write(row_no, 8, "FLAT")
-            row_no = row_no + 1
+            trd_acc.write(row_trade, 7, code)
+            trd_acc.write(row_trade, 6, accessories_name)
+            trd_acc.write(row_trade, 8, "FLAT")
+            row_trade = row_trade + 1
 
     file_name = "{}_tl_billing_slab.xls".format(config.TENANT_ID)
     wk.save(file_name)
