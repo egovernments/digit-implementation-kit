@@ -64,9 +64,9 @@ def download_billing_slab(auth_token):
 
     localization_map = get_billing_slab_localization(auth_token)
 
-    acc_map = get_accessories_from_mdms(auth_token)
+    acc_map = get_accessories_from_mdms( auth_token)
 
-    trade_map = get_trade_type_from_mdms(auth_token)
+    trade_map = get_trade_type_from_mdms( auth_token)
 
     for billing_slab in billing_slabs:
         if billing_slab["tradeType"] is not None:
@@ -74,14 +74,13 @@ def download_billing_slab(auth_token):
         elif billing_slab["accessoryCategory"] is not None:
             acc_map[billing_slab["accessoryCategory"]].append(billing_slab)
 
-    row_trade = 1
+    row_no = 1
 
     for code, slabs in trade_map.items():
         if len(slabs) != 0:
             for slab in slabs:
                 id = slab["id"]
 
-                # licence_type = "PERMANENT"
                 structure_type = slab["structureType"]
                 codes = slab["tradeType"]
                 charge = slab["rate"]
@@ -91,31 +90,31 @@ def download_billing_slab(auth_token):
 
                 trade_sub_type_name = localization_map.get(get_trade_localization_code(slab["tradeType"])) or ""
 
-                trd_acc.write(row_trade, 0, row_trade)
+                trd_acc.write(row_no, 0, row_no)
 
-                trd_acc.write(row_trade, 1, id)
-                trd_acc.write(row_trade, 2, "PERMANENT")
-                trd_acc.write(row_trade, 3, structure_type)
-                trd_acc.write(row_trade, 4, trade_sub_type_name)
-                trd_acc.write(row_trade, 5, codes)
-                trd_acc.write(row_trade, 8, "FLAT")
-                trd_acc.write(row_trade, 9, charge)
-                trd_acc.write(row_trade, 10, uom_unit)
-                trd_acc.write(row_trade, 11, uom_from)
-                trd_acc.write(row_trade, 12, uom_to)
+                trd_acc.write(row_no, 1, id)
+                trd_acc.write(row_no, 2, "PERMANENT")
+                trd_acc.write(row_no, 3, structure_type)
+                trd_acc.write(row_no, 4, trade_sub_type_name)
+                trd_acc.write(row_no, 5, codes)
+                trd_acc.write(row_no, 8, "FLAT")
+                trd_acc.write(row_no, 9, charge)
+                trd_acc.write(row_no, 10, uom_unit)
+                trd_acc.write(row_no, 11, uom_from)
+                trd_acc.write(row_no, 12, uom_to)
 
-                row_trade = row_trade + 1
+                row_no = row_no + 1
         else:
 
             trade_sub_type_name = localization_map.get(get_trade_localization_code(code)) or ""
 
-            trd_acc.write(row_trade, 0, row_trade)
-            trd_acc.write(row_trade, 2, "PERMANENT")
-            trd_acc.write(row_trade, 4, trade_sub_type_name)
-            trd_acc.write(row_trade, 8, "FLAT")
-            trd_acc.write(row_trade, 5, code)
+            trd_acc.write(row_no, 0, row_no)
+            trd_acc.write(row_no, 2, "PERMANENT")
+            trd_acc.write(row_no, 4, trade_sub_type_name)
+            trd_acc.write(row_no, 8, "FLAT")
+            trd_acc.write(row_no, 5, code)
 
-            row_trade = row_trade + 1
+            row_no = row_no + 1
 
     for code, slabs in acc_map.items():
         if len(slabs) != 0:
@@ -132,27 +131,27 @@ def download_billing_slab(auth_token):
                 accessories_name = localization_map.get(
                     get_accessories_localization_code(slab["accessoryCategory"])) or ""
 
-                trd_acc.write(row_trade, 0, row_trade)
-                trd_acc.write(row_trade, 1, id)
-                trd_acc.write(row_trade, 2, "PERMANENT")
-                trd_acc.write(row_trade, 7, accessory_category_code)
-                trd_acc.write(row_trade, 6, accessories_name)
-                trd_acc.write(row_trade, 8, "FLAT")
-                trd_acc.write(row_trade, 9, charge)
-                trd_acc.write(row_trade, 10, uom_unit)
-                trd_acc.write(row_trade, 11, uom_from)
-                trd_acc.write(row_trade, 12, uom_to)
-                row_trade = row_trade + 1
+                trd_acc.write(row_no, 0, row_no)
+                trd_acc.write(row_no, 1, id)
+                trd_acc.write(row_no, 2, "PERMANENT")
+                trd_acc.write(row_no, 7, accessory_category_code)
+                trd_acc.write(row_no, 6, accessories_name)
+                trd_acc.write(row_no, 8, "FLAT")
+                trd_acc.write(row_no, 9, charge)
+                trd_acc.write(row_no, 10, uom_unit)
+                trd_acc.write(row_no, 11, uom_from)
+                trd_acc.write(row_no, 12, uom_to)
+                row_no = row_no + 1
         else:
 
             accessories_name = localization_map.get(get_accessories_localization_code(code)) or ""
-            trd_acc.write(row_trade, 0, row_trade)
-            trd_acc.write(row_trade, 2, "PERMANENT")
+            trd_acc.write(row_no, 0, row_no)
+            trd_acc.write(row_no, 2, "PERMANENT")
 
-            trd_acc.write(row_trade, 7, code)
-            trd_acc.write(row_trade, 6, accessories_name)
-            trd_acc.write(row_trade, 8, "FLAT")
-            row_trade = row_trade + 1
+            trd_acc.write(row_no, 7, code)
+            trd_acc.write(row_no, 6, accessories_name)
+            trd_acc.write(row_no, 8, "FLAT")
+            row_no = row_no + 1
 
     file_name = "{}_tl_billing_slab.xls".format(config.TENANT_ID)
     wk.save(file_name)
