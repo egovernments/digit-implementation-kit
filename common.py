@@ -164,6 +164,8 @@ def validate_boundary_data(auth_token, boundary_data, boundary_type, duplicate_c
     if not tenant_boundary:
         return errors
 
+
+
     locality_code_map = {}
     locality_name_map = {}
 
@@ -179,27 +181,27 @@ def validate_boundary_data(auth_token, boundary_data, boundary_type, duplicate_c
         missing_boundary_codes = list(set(localities_in_use) - set(locality_code_map.keys()))
         for locality in missing_boundary_codes:
             errors.append(
-                "Boundary code \"{}\" is used by existing properties and not present in current boundary".format(
+                "\nBoundary code \"{}\" is used by existing properties and not present in current boundary".format(
                     locality))
 
     if duplicate_check:
         for locality_code, count in locality_code_map.items():
             if count > 1:
-                errors.append("Duplicate Locality Code \"{}\" Repeated for \"{}\" times".format(locality_code, count))
+                errors.append("\nDuplicate Locality Code \"{}\" Repeated for \"{}\" times".format(locality_code, count))
 
         for locality_name, zone_n_block in locality_name_map.items():
             if len(zone_n_block) > 3:
                 # As we are adding locality code, zone name, ward name locality name against locality name
                 # So, each locality name contains atleast 3 data in the list.
                 # If size of list is more that 3 then locality name is repeated for multiple times
-                errors.append("\n\nDuplicate Locality Name")
-                errors.append("\tName : {}".format(locality_name))
-                errors.append("\tZone : {}".format(zone_n_block[1]))
-                errors.append("\tWard/Block : {}".format(zone_n_block[2]))
+                errors.append("\nDuplicate Locality Name: \"{}\" Zone : \"{}\" Ward/Block : \"{}\"".format(locality_name,zone_n_block[1],zone_n_block[2]))
+                # errors.append("Name : {}".format(locality_name))
+                # errors.append("Zone : {}".format(zone_n_block[1]))
+                # errors.append("Ward/Block : {}".format(zone_n_block[2]))
 
                 # Getting all the locality code from "zone_n_block" list
                 same_name_locality_code = [zone_n_block[i] for i in range(0, len(zone_n_block)) if i % 3 == 0]
-                errors.append("\n\tRepetition : {}".format(len(same_name_locality_code)))
+                errors.append("\nRepetition : \"{}\" locality code: \"{}\" ".format(len(same_name_locality_code),same_name_locality_code))
                 for loc_code in same_name_locality_code:
                     if loc_code in localities_in_use:
                         errors.append("\t\t{} : {}".format(loc_code, "USED"))

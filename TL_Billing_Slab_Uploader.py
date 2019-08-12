@@ -7,7 +7,7 @@ import requests
 import json
 
 tenants = [
-    "pb.testing"
+    "pb.lehragaga"
 ]
 
 
@@ -159,7 +159,7 @@ def create_billing_slab(update_slabs_data):
 
 
 import os
-from TLBillingSlabDownload import search_tl_billing_slab
+from TL_Billing_Slab_Download import search_tl_billing_slab
 
 for tenant in tenants:
     response = os.getenv("ASSUME_YES", None) or input(
