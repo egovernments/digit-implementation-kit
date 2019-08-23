@@ -7,7 +7,7 @@ import requests
 import json
 
 tenants = [
-    "pb.lehragaga"
+    "pb.banga"
 ]
 
 
@@ -132,7 +132,7 @@ def is_new_billing_slab(row_data):
            row_data["fromUom"] is not None and row_data["fromUom"] >= 0
 
 
-def update_billing_slab(new_slabs_data):
+def create_billing_slab(new_slabs_data):
     print("Creating New billing slabs")
     print(json.dumps(new_slabs_data, indent=2))
     res = requests.post(config.HOST + "/tl-calculator/billingslab/_create?tenantId={}".format(tenant_id), json={
@@ -145,7 +145,7 @@ def update_billing_slab(new_slabs_data):
     print(json.dumps(res.json(), indent=2))
 
 
-def create_billing_slab(update_slabs_data):
+def update_billing_slab(update_slabs_data):
     print("Updating changed billing slabs")
     print(json.dumps(update_slabs_data, indent=2))
     res = requests.post(config.HOST + "/tl-calculator/billingslab/_update?tenantId={}".format(tenant_id), json={
@@ -167,10 +167,9 @@ for tenant in tenants:
     if response.lower() == "n":
         os._exit(0)
 
+    tenant_id = tenant
     config.CITY_NAME = tenant.replace(" ", "").replace("pb.", "")
     load_config()
-
-    tenant_id = config.TENANT_ID
 
     auth_token = superuser_login()["access_token"]
 
