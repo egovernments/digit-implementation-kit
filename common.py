@@ -164,8 +164,6 @@ def validate_boundary_data(auth_token, boundary_data, boundary_type, duplicate_c
     if not tenant_boundary:
         return errors
 
-
-
     locality_code_map = {}
     locality_name_map = {}
 
@@ -194,14 +192,18 @@ def validate_boundary_data(auth_token, boundary_data, boundary_type, duplicate_c
                 # As we are adding locality code, zone name, ward name locality name against locality name
                 # So, each locality name contains atleast 3 data in the list.
                 # If size of list is more that 3 then locality name is repeated for multiple times
-                errors.append("\nDuplicate Locality Name: \"{}\" Zone : \"{}\" Ward/Block : \"{}\"".format(locality_name,zone_n_block[1],zone_n_block[2]))
+                errors.append(
+                    "\nDuplicate Locality Name: \"{}\" Zone : \"{}\" Ward/Block : \"{}\"".format(locality_name,
+                                                                                                 zone_n_block[1],
+                                                                                                 zone_n_block[2]))
                 # errors.append("Name : {}".format(locality_name))
                 # errors.append("Zone : {}".format(zone_n_block[1]))
                 # errors.append("Ward/Block : {}".format(zone_n_block[2]))
 
                 # Getting all the locality code from "zone_n_block" list
                 same_name_locality_code = [zone_n_block[i] for i in range(0, len(zone_n_block)) if i % 3 == 0]
-                errors.append("\nRepetition : \"{}\" locality code: \"{}\" ".format(len(same_name_locality_code),same_name_locality_code))
+                errors.append("\nRepetition : \"{}\" locality code: \"{}\" ".format(len(same_name_locality_code),
+                                                                                    same_name_locality_code))
                 for loc_code in same_name_locality_code:
                     if loc_code in localities_in_use:
                         errors.append("\t\t{} : {}".format(loc_code, "USED"))
@@ -626,11 +628,11 @@ def generate_bill(auth_token, tenant_id, demand_id, consumer_code, business_serv
 
                              ]
                          }, params={
-                                     "tenantId": tenant_id,
-                                     "demandId": demand_id,
-                                     "consumerCode": consumer_code,
-                                     "businessService": business_service,
-                                 })
+            "tenantId": tenant_id,
+            "demandId": demand_id,
+            "consumerCode": consumer_code,
+            "businessService": business_service,
+        })
 
     return data.json()
 
@@ -699,6 +701,7 @@ def upsert_localization(auth_token, body):
     data = requests.post(url=config.HOST + '/localization/messages/v1/_upsert', json=body)
     return data.json()
 
+
 def mdms_call(auth_token, module_name, master_details):
     url = urljoin(config.HOST, '/egov-mdms-service/v1/_search')
     request_body = {}
@@ -709,7 +712,7 @@ def mdms_call(auth_token, module_name, master_details):
     return requests.post(url, params=parms, json=request_body).json()
 
 
-def search_localization(auth_token, module_name, locale,tenant_id=config.TENANT_ID):
+def search_localization(auth_token, module_name, locale, tenant_id=config.TENANT_ID):
     url = urljoin(config.HOST, '/localization/messages/v1/_search')
     request_body = {}
     request_body["RequestInfo"] = {"authToken": auth_token}
@@ -721,5 +724,5 @@ def search_tl_billing_slab(auth_token, tenant_id=config.TENANT_ID):
     url = urljoin(config.HOST, '/tl-calculator/billingslab/_search')
     request_body = {}
     request_body["RequestInfo"] = {"authToken": auth_token}
-    parms= {"tenantId": tenant_id}
+    parms = {"tenantId": tenant_id}
     return requests.post(url, params=parms, json=request_body).json()

@@ -20,8 +20,8 @@ def mdms_call_tenant(auth_token, tenant_id, module_name, master_details):
 
 def get_mdms_boundary_data(auth_token, tenant_id):
     get_boundary_data = \
-    mdms_call_tenant(auth_token, tenant_id, "egov-location", "TenantBoundary")["MdmsRes"]["egov-location"][
-        "TenantBoundary"]
+        mdms_call_tenant(auth_token, tenant_id, "egov-location", "TenantBoundary")["MdmsRes"]["egov-location"][
+            "TenantBoundary"]
     return get_boundary_data
 
 
@@ -111,8 +111,6 @@ def create_boundary_new(auth_token, config_function, boundary_type):
             ward_list.append(ward)
         zone_ward_len = zone_ward_len + len(zone_ward)
 
-
-
     zone_data = []
     for zones in zone_code_map:
         name = zone_code_map[zones]
@@ -151,7 +149,6 @@ def create_boundary_new(auth_token, config_function, boundary_type):
             for loc_ward in ward_loc_data:
                 if loc_ward["code"] == ward["code"]:
                     loc_ward["id"] = ward["id"]
-
 
     for ward_loc in ward_loc_data:
         for loc in ward_loc["children"]:
@@ -201,9 +198,9 @@ def create_boundary_new(auth_token, config_function, boundary_type):
 
     auth_token = superuser_login()["access_token"]
     errors = validate_boundary_data(auth_token, final_data, boundary_type, config.BOUNDARY_DUPLICATE_CHECK,
-                                         config.BOUNDARY_USED_CHECK)
+                                    config.BOUNDARY_USED_CHECK)
 
-    #validate for one block is in multiple zones
+    # validate for one block is in multiple zones
     freq = {}
     for item in ward_list:
         if (item in freq):
@@ -220,7 +217,6 @@ def create_boundary_new(auth_token, config_function, boundary_type):
         for error in errors:
             print(error)
         return
-
 
     print(data)
 

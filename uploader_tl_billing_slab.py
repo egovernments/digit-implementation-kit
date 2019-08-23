@@ -7,7 +7,6 @@ import requests
 import json
 
 
-
 def get_slab_code(slab):
     fields = ["licenseType", "structureType", "tradeType", "accessoryCategory"]
     data = []
@@ -40,7 +39,7 @@ def remove_nan(data, default=None):
     return data
 
 
-def get_slab_object(row_data,tenant_id):
+def get_slab_object(row_data, tenant_id):
     data = {
         "tenantId": tenant_id,
         "licenseType": remove_nan(row_data["licenseType"]),
@@ -129,7 +128,7 @@ def is_new_billing_slab(row_data):
            row_data["fromUom"] is not None and row_data["fromUom"] >= 0
 
 
-def create_billing_slab(new_slabs_data,auth_token,tenant_id):
+def create_billing_slab(new_slabs_data, auth_token, tenant_id):
     print("Creating New billing slabs")
     print(json.dumps(new_slabs_data, indent=2))
     res = requests.post(config.HOST + "/tl-calculator/billingslab/_create?tenantId={}".format(tenant_id), json={
@@ -142,7 +141,7 @@ def create_billing_slab(new_slabs_data,auth_token,tenant_id):
     print(json.dumps(res.json(), indent=2))
 
 
-def update_billing_slab(update_slabs_data,auth_token,tenant_id):
+def update_billing_slab(update_slabs_data, auth_token, tenant_id):
     print("Updating changed billing slabs")
     print(json.dumps(update_slabs_data, indent=2))
     res = requests.post(config.HOST + "/tl-calculator/billingslab/_update?tenantId={}".format(tenant_id), json={
@@ -159,7 +158,7 @@ import os
 from tl_billing_slab_download import search_tl_billing_slab
 
 
-def create_and_update_billing_slab(auth_token,tenant):
+def create_and_update_billing_slab(auth_token, tenant):
     response = os.getenv("ASSUME_YES", None) or input(
         "Your ENV is \"{}\" and TENANT ID is \"{}\", You want to proceed (y/[n])?".format(config.CONFIG_ENV,
                                                                                           tenant))
@@ -239,8 +238,6 @@ def create_and_update_billing_slab(auth_token,tenant):
 
     else:
         if update_slabs:
-            update_billing_slab(update_slabs, auth_token,tenant_id)
+            update_billing_slab(update_slabs, auth_token, tenant_id)
         if new_slabs:
-            create_billing_slab(new_slabs, auth_token,tenant_id)
-
-
+            create_billing_slab(new_slabs, auth_token, tenant_id)
