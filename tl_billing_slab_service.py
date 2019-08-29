@@ -50,7 +50,7 @@ def get_slab_object(row_data, tenant_id):
         "uom": remove_nan(row_data["uom"]),
         "fromUom": remove_nan(row_data["fromUom"]),
         "toUom": remove_nan(row_data["toUom"]),
-        "rate": remove_nan(row_data["rate"], default=0.0)
+        "rate": remove_nan(row_data["rate"])
     }
 
     if "id" in row_data and type(row_data['id']) is str and len(row_data["id"]) > 6:
@@ -67,8 +67,8 @@ def compare_slabs_with_same_id(row_data, bs_data):
             row_data["rate"] = float(row_data["rate"])
         else:
             row_data["rate"] = math.nan
-    if math.isnan(row_data["rate"]):
-        row_data["rate"] = 0.0
+    # if math.isnan(row_data["rate"]):
+    #     row_data["rate"] = 0.0
 
     if row_data["id"] == bs_data["id"] and \
             row_data["structureType"] == bs_data["structureType"] and \
@@ -184,6 +184,45 @@ def create_and_update_billing_slab(auth_token, tenant):
 
     for _id, slabs in data.iterrows():
         row_data = get_slab_object(slabs.to_dict(), tenant_id)
+
+        if row_data["tradeType"]:  # valiadate empty structure type
+            if row_data["rate"]:
+                if row_data["structureType"]:
+                    pass
+                else:
+                    error_lis.append("empty structure type: {}".format(row_data["tradeType"]))
+
+        if row_data["rate"] :  # validate rate and fromUom and toUom
+            if row_data["licenseType"]:
+                pass
+            else:
+                error_lis.append(
+                    "empty license type: {} ".format(row_data["tradeType"] or row_data["accessoryCategory"]))
+
+            if type(row_data["fromUom"]) in (float, int):
+                if row_data["fromUom"] is not None and row_data["fromUom"] >= 0:
+                    pass
+                else:
+                    error_lis.append(
+                        "empty fromuom : {}".format(row_data["tradeType"] or row_data["accessoryCategory"]))
+            else:
+                if row_data["fromUom"] == '':
+                    pass
+                else:
+                    error_lis.append(
+                        "empty fromUom: {} ".format(row_data["tradeType"] or row_data["accessoryCategory"]))
+
+            if type(row_data["toUom"]) in (float, int):
+                if row_data["toUom"] is not None and row_data["toUom"] >= 0:
+                    pass
+                else:
+                    error_lis.append("empty toUom: {} ".format(row_data["tradeType"] or row_data["accessoryCategory"]))
+            else:
+                if row_data["toUom"] == 'Infinity':
+                    pass
+                else:
+                    error_lis.append("empty toUom: {} ".format(row_data["tradeType"] or row_data["accessoryCategory"]))
+
         slab_code = get_slab_code(row_data)
         if "id" in row_data:
             if row_data["id"] in duplicate_id_check:  # Checking Duplicate id in sheet
@@ -212,7 +251,6 @@ def create_and_update_billing_slab(auth_token, tenant):
 
 
         elif is_new_billing_slab(row_data):
-
             if slab_code not in row_data_code_map:
                 row_data_code_map[slab_code] = []
                 row_data_code_map[slab_code].append(row_data)
@@ -234,8 +272,8 @@ def create_and_update_billing_slab(auth_token, tenant):
 
     if error_lis:
         for err in error_lis:
-            print(err)
 
+            print(err)
     else:
         if update_slabs:
             update_billing_slab(update_slabs, auth_token, tenant_id)
