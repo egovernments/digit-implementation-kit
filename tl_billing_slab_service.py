@@ -186,13 +186,13 @@ def create_and_update_billing_slab(auth_token, tenant):
         row_data = get_slab_object(slabs.to_dict(), tenant_id)
 
         if row_data["tradeType"]:  # valiadate empty structure type
-            if row_data["rate"]:
+            if row_data["rate"] is not None and row_data["rate"] >= 0:
                 if row_data["structureType"]:
                     pass
                 else:
                     error_lis.append("empty structure type: {}".format(row_data["tradeType"]))
 
-        if row_data["rate"] :  # validate rate and fromUom and toUom
+        if row_data["rate"] is not None and row_data["rate"] >= 0:  # validate rate and fromUom and toUom
             if row_data["licenseType"]:
                 pass
             else:
@@ -272,7 +272,6 @@ def create_and_update_billing_slab(auth_token, tenant):
 
     if error_lis:
         for err in error_lis:
-
             print(err)
     else:
         if update_slabs:
