@@ -747,20 +747,22 @@ def update_property_status(auth_token, properties, status="INACTIVE"):
     for property_id, tenant_id in properties:
         if status == "INACTIVE":
             # serach property
-            serach_propertyes = search_property(auth_token, tenant_id, property_id)["Properties"]
+            search_properties = search_property(auth_token, tenant_id, property_id)["Properties"]
 
-            total_rec_len = 0
-            for serach_propertys in serach_propertyes:
-                for property_details in serach_propertys["propertyDetails"]:
+            receipts_count = 0
+            consumer_codes = []
+            # assessment_numbers=search_properties["propertyDetails"].map(lambda pd:  pd["assessmentNumber"])
+            for property in search_properties:
+                for property_details in property["propertyDetails"]:
                     assessment_number = property_details["assessmentNumber"]
                     # get all consumer codes
-                    consumer_code = property_id + ':' + assessment_number
+                    consumer_codes.append(property_id + ':' + assessment_number)
                     # search receipt for all these consumer codes
-                    total_rec_len = total_rec_len + len(
-                        search_receipt(auth_token, None, tenant_id, consumer_code)["Receipt"])
+            receipts_count = receipts_count + len(
+                search_receipt(auth_token, None, tenant_id, ','.join(consumer_codes))["Receipt"])
             # if there is receipt, throw error that there is a active receipt and
             # property cannot be de-activate
-            if total_rec_len > 0:
+            if receipts_count > 0:
                 print("there is a active receipt {} property cannot be de-activate ".format(property_id))
             else:
                 # cancel property, cancel the property
@@ -770,13 +772,12 @@ def update_property_status(auth_token, properties, status="INACTIVE"):
 def cleanup_property(auth_token, properties):
     for property_id, tenant_id in properties:
         # search_property()
-        serach_propertyes = search_property(auth_token, tenant_id, property_id)["Properties"]
+        search_properties = search_property(auth_token, tenant_id, property_id)["Properties"]
 
         asse_and_property_map = {}
         ass_and_receipt_map = {}
-        total_rec_len = 0
-        for serach_propertys in serach_propertyes:
-            for property_details in serach_propertys["propertyDetails"]:
+        for property in search_properties:
+            for property_details in property["propertyDetails"]:
                 assessment_number = property_details["assessmentNumber"]
                 # get all consumer codes
                 consumer_code = property_id + ':' + assessment_number
@@ -795,12 +796,15 @@ def cleanup_property(auth_token, properties):
             if len(receipts) > 0:
                 flag = True
                 break
+        assessment_numbers = []
         if flag is False:
             sorted(asse_and_property_map.itervalues(), reverse=True)
             latest_create_ass = list(asse_and_property_map.keys())[0]
-            for assessment_numbers, receipts in ass_and_receipt_map.items():
-                if assessment_number != latest_create_ass:
-                    cancel_property(auth_token, tenant_id, property_id, assessment_numbers, action="CANCEL_ASSESSMENT")
+            for ass_numbers, receipts in ass_and_receipt_map.items():
+                if ass_numbers != latest_create_ass:
+                    assessment_numbers.append(ass_numbers)
+
+        cancel_property(auth_token, tenant_id, property_id, ','.join(assessment_numbers), action="CANCEL_ASSESSMENT")
 
         #
         # # get all consumer codes for which receipts are not there
