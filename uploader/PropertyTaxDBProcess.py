@@ -1,3 +1,4 @@
+import datetime as dt
 import psycopg2
 import json
 import os
@@ -10,16 +11,16 @@ from config import config
 from uploader.parsers.ikonV2 import IkonPropertyV2
 
 
-dbname = os.getenv("DB_NAME", "mohali_legacy_data")
+dbname = os.getenv("DB_NAME", "ludhiana_legacy_data")
 dbuser = os.getenv("DB_USER", "postgres")
 dbpassword = os.getenv("DB_PASSWORD", "postgres")
-tenant = os.getenv("TENANT", "pb.mohali")
-city = os.getenv("CITY", "MOHALI")
+tenant = os.getenv("TENANT", "pb.ludhiana")
+city = os.getenv("CITY", "LUDHIANA")
 host = os.getenv("DB_HOST", "localhost")
-batch = os.getenv("BATCH_NAME", "18")
-table_name = os.getenv("TABLE_NAME", "mohali_pt_legacy_data")
+batch = os.getenv("BATCH_NAME", "1")
+table_name = os.getenv("TABLE_NAME", "ludhiana_pt_legacy_data")
 default_phone = os.getenv("DEFAULT_PHONE", "9999999999")
-default_locality = os.getenv("DEFAULT_LOCALITY", "SUN62")
+default_locality = os.getenv("DEFAULT_LOCALITY", "UNKNOWN")
 batch_size = os.getenv("BATCH_SIZE", "100")
 
 #dry_run = (False, True)[os.getenv("DRY_RUN", "True").lower() == "true"]
@@ -114,14 +115,14 @@ def main():
                                    }
 
                     response = requests.post(
-                        urljoin(config.HOST, "/property-services/property/_search?acknowledgementIds="+ack_no+"&tenantId=pb.mohali"),
+                        urljoin(config.HOST, "/property-services/property/_search?acknowledgementIds="+ack_no+"&tenantId=pb.ludhiana"),
                         json=request_data)
 
                     res=response.json()
 
                     property_added=res["Properties"][0]
                     property_added["0"] = {"comment": "", "assignee": []}
-                    property_added["workflow"] = {"id": None, "tenantId": "pb.mohali", "businessService": "PT.CREATE","businessId": ack_no, "action": "APPROVE", "moduleName": "PT","state": None, "comment": None, "documents": None, "assignes": None}
+                    property_added["workflow"] = {"id": None, "tenantId": "pb.ludhiana", "businessService": "PT.CREATE","businessId": ack_no, "action": "APPROVE", "moduleName": "PT","state": None, "comment": None, "documents": None, "assignes": None}
 
                     request_data = {
                         "RequestInfo": {
@@ -140,15 +141,25 @@ def main():
                     print("APPROVED", pt_id)
 
                     # to create assessment
+                    try:
+                        assessmentDate = dt.datetime.strptime(json_data["paymentdate"], "%d/%m/%Y").strftime(
+                            '%Y-%m-%d')
+                        assessmentTime = time.strptime(assessmentDate, '%Y-%m-%d')
+                        assementEpoch = time.mktime(assessmentTime) * 1000
+                    except Exception as eex:
+                        # continue  # skip this assessment as in mohali paymentdate or paymentmode NULL means only estimate was given
+                        assementEpoch = 946665000000  # 01-Jan-2000 default assessment epoch time
+
+
                     request_data={"RequestInfo": {"apiId": "Rainmaker", "ver": ".01", "ts": "", "action": "_create", "did": "1",
                                   "key": "", "msgId": "20170310130900|en_IN",
                                   "authToken": access_token
                                                   },
-                                  "Assessment": {"tenantId": "pb.mohali", "propertyId": pt_id,
-                                  "financialYear": financial_year, "assessmentDate": time.time(),
+                                  "Assessment": {"tenantId": "pb.ludhiana", "propertyId": pt_id,
+                                  "financialYear": financial_year, "assessmentDate": assementEpoch,
                                   "source": "LEGACY_RECORD", "channel": "LEGACY_MIGRATION", "additionalDetails": {}}}
                     response = requests.post(
-                        urljoin(config.HOST, "/property-services/assessment/_create?tenantId=pb.mohali"),
+                        urljoin(config.HOST, "/property-services/assessment/_create?tenantId=pb.ludhiana"),
                         json=request_data)
 
                     res = response.json()

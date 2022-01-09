@@ -304,6 +304,7 @@ OC_MAP = {
     "Self Occupied": "SELFOCCUPIED",
     "Un-Productive": "UNOCCUPIED",
     "Rented": "RENTED",
+    "Rented - Hostel": "RENTED",
     "Vacant AreaLand": "UNOCCUPIED"
 }
 

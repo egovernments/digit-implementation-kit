@@ -69,6 +69,10 @@ CREATE TABLE public.jalandhar_pt_legacy_data (
     new_propertyid text,
     upload_status text,
     upload_response text,
+    
+    upload_response_workflow text,
+	upload_response_assessment text,
+    
     new_assessmentnumber text,
     new_tax text,
     new_total text,
