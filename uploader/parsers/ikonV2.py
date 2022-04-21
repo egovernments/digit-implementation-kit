@@ -19,19 +19,14 @@ class IkonPropertyV2(Property):
         #})]
 
     def process_additional_details(self, context):
-        self.old_property_id = "UPIN{}".format(context["returnid"])
+        self.old_property_id = "SURV{}".format(context["returnid"])
         self.additional_details = {
-            "legacyInfo": {
+            "surveyInfo": {
                 "returnid": context["returnid"],
-                "session": context["session"],
-                "taxamt": context["taxamt"],
-                "acknowledgementno": context["acknowledgementno"],
                 "colony": context["colony"],
                 "sector": context["sector"],
                 "exemptioncategory": context["exemptioncategory"],
                 "totalcoveredarea": context["totalcoveredarea"],
-                "grosstax": context["grosstax"],
-                "amountpaid": context["amountpaid"],
                 "businessname": context["businessname"],
                 "waterconnectionno": context["waterconnectionno"],
                 "electricityconnectionno": context["electrictyconnectionno"],
@@ -40,12 +35,20 @@ class IkonPropertyV2(Property):
                 "address":context["address"],
                 "unbuiltarea":context["unbuiltarea"],
                 "client_data_id": context["client_data_id"],
-                "height_above_36ft":context["height_above_36ft"],
                 "buildingcategory": context["buildingcategory"],
                 "usage" : context["usage"],
+                "entrydate": context["entrydate"],
+                "owner":context["owner"],
+                "floor":context["floor"],
+                "usage":context["usage"],
+                "landusedtype":context["landusedtype"],
+                "plotarea":context["plotarea"],
+                "REMARK":context["remarks"],
+                "name_of_surveyer":context["name_of_surveyer"],
+                "mobile_detail":context["mobile_detail"],
+                "other_detail":context["other_detail"]
 
-                "owner_doc_type": "",
-                "owner_adhaar": ""
+
             }
         }
 
@@ -59,27 +62,31 @@ class IkonPropertyV2(Property):
 
     def process_address(self, context, city):
         locality = Locality(code=context["new_locality_code"])
-        self.address = Address(city=city, door_no=context["houseno"], locality=locality)
+        #self.address = Address(city=city, door_no=context["houseno"], locality=locality)
+        self.address = Address(city=city, door_no=context["address"], locality=locality)
+
 
         if len(self.address.door_no) > 64:
             self.address.door_no = self.address.door_no[:64]
-            self.additional_details["legacyInfo"]["houseno"] = context["houseno"]
+            self.additional_details["surveyInfo"]["houseno"] = context["address"]
 
     def process_owner_information(self, context=None):
         #Owner Info contains owner Doc details, OwnerAdhaarCardNo,WatercConnectionDetails
-        self.additional_details["legacyInfo"]["waterconnectionno"] = ""
-        self.additional_details["legacyInfo"]["owner_doc_type"] = ""
-        self.additional_details["legacyInfo"]["owner_adhaar"] = ""
+        self.additional_details["surveyInfo"]["waterconnectionno"] = ""
+        self.additional_details["surveyInfo"]["owner_doc_type"] = ""
+        self.additional_details["surveyInfo"]["owner_adhaar"] = ""
 
         owners = context["owner"]
 
-        for name, adhaar, email, doctype, docno, relation, father_name, mobile, exemptiontype, watersupplyid, watersuplyaccountno in parse_owners_information(owners):
+        for ownertype, name,localName, relation, father_name, father_name_locale, adhaar, na1, doctype, docno, na2,  mobile, email, address, exemptiontype, exemption_doc_no, date1,date2,na3,na4 in parse_owners_information(owners):
             #if watersupply and sewerage connection is present then add to legacy info here
-            self.additional_details["legacyInfo"]["waterconnectionno"] = self.additional_details["legacyInfo"]["waterconnectionno"]+watersupplyid+"#"+watersuplyaccountno+" "
+
+            #self.additional_details["surveyInfo"]["waterconnectionno"] = self.additional_details["surveyInfo"]["waterconnectionno"]+watersupplyid+"#"+watersuplyaccountno+" "
+
             #if add owner adhaarno and ther additionaldetails in legacy info here
-            self.additional_details["legacyInfo"]["owner_doc_type"] = self.additional_details["legacyInfo"][
+            self.additional_details["surveyInfo"]["owner_doc_type"] = self.additional_details["surveyInfo"][
                                                                              "owner_doc_type"] + doctype+ "#" + docno+ " "
-            self.additional_details["legacyInfo"]["owner_adhaar"] = self.additional_details["legacyInfo"]["owner_adhaar"]+"#"+adhaar
+            self.additional_details["surveyInfo"]["owner_adhaar"] = self.additional_details["surveyInfo"]["owner_adhaar"]+"#"+adhaar
             owner = Owner(name=name,relationship=relation ,father_or_husband_name=father_name, mobile_number=mobile, owner_type=exemptiontype)
 
 
@@ -157,7 +164,7 @@ class IkonPropertyV2(Property):
         #pd: PropertyDetail = self.property_details[0]
 
 
-        if floors == 'Â' or floors == '' or (floors is None and context["leasedetail"] is  None) or context["usage"] == "Vacant Plot":   # if floor info is not there then check if leasedetail info is present to consider as Non-Vacant
+        if floors == 'Â' or floors == '' or floors is None or context["usage"] == "Vacant Plot":   # if floor info is not there then check if leasedetail info is present to consider as Non-Vacant
             self.property_type = "VACANT"
             self.no_of_floors = 1
             self.land_area = (""+context["plotarea"]).split(" ", 1)[0]  #detatching 'Sq. Yard' text from plotsize
@@ -169,29 +176,31 @@ class IkonPropertyV2(Property):
 
             building_category = context["buildingcategory"]
 
-            for floor, covered_area, usage, occupancy, _, unit_usage_occupancy, tax, unproductive_month in parse_flat_information(context["floor"]):
+            for src, floor,  usage ,coverage, type , unit_usage_occupancy, covered_area, covered_area_ft,covered_area_1 in parse_flat_information(context["floor"]):
                 if "- VACANT" in floor.upper():
                     continue   # to skip any vacant area on floor (Basicaly ...Ground Floor - Vacant... floors are not to be added and assumed to be calculated automaticaly)
 
                 #construction_detail = ConstructionDetail(built_up_area=float(covered_area) / 9)
                 #Sq. Yard on covered_area for Patiala
                 #Sq. Feet in covered_area for Patiala
-                if "Sq. Yard" in covered_area:
-                    construction_detail = ConstructionDetail(built_up_area=float(covered_area.split(" ", 1)[0]))
-                else:  # It is Sq. Feet
-                    construction_detail = ConstructionDetail(built_up_area=float(covered_area.split(" ", 1)[0]) / 9)  # converted Sq. Feet to Sq. Yard
+                construction_detail = ConstructionDetail(built_up_area=float(covered_area_ft))
 
                 if construction_detail.built_up_area==float("0"):   # if builtuparea is "0" as in some patiala properties builtuparea is received as "0"
                     construction_detail = ConstructionDetail("18")
+
+                occupancy="SELF_USE"
+                if usage.find("Commercial") != -1 and context["owner"].find("Lease") != -1: # if commercial unit and Lease info is present in owner then treat it as RENTED
+                    occupancy="RENT"
 
                 unit = Unit(floor_no=get_floor_number(floor),
                             occupancy_type=OC_MAP[occupancy],
                             construction_detail=construction_detail)
 
-                if unproductive_month == "12":
-                    unit.occupancy_type = "UNOCCUPIED"
+                #if unproductive_month == "12":
+                #    unit.occupancy_type = "UNOCCUPIED"
                 if OC_MAP[occupancy] == "RENTED":
-                    unit.arv = round(float(tax) * (100 / 7.5), 2)
+                    #unit.arv = round(float(tax) * (100 / 7.5), 2)
+                    unit.arv=120000  #default arv as rent value is not available in survey data
 
                     if unit.arv == 0:
                         unit.arv = None
@@ -206,9 +215,11 @@ class IkonPropertyV2(Property):
                     unit.usage_category_major = "NONRESIDENTIAL"
                     unit.usage_category="NONRESIDENTIAL"
 
-                    if building_category in BD_UNIT_MAP:
+                    #if building_category in BD_UNIT_MAP:
+                    if context["propertytype"] in BD_UNIT_MAP:
                         unit.usage_category_minor, unit.usage_category_sub_minor, unit.usage_category_detail = \
-                            BD_UNIT_MAP[building_category]
+                            BD_UNIT_MAP[context["propertytype"]]
+                            # BD_UNIT_MAP[building_category]
                     else:
                         unit.usage_category_minor = "COMMERCIAL"
                         unit.usage_category_sub_minor = "OTHERCOMMERCIALSUBMINOR"
@@ -241,7 +252,8 @@ class IkonPropertyV2(Property):
         if len(floor_set) > 0:   # for VACANT PLOT len(floor_set) is 0 or None but no_of_floors must be atleast 1
             self.no_of_floors = len(floor_set)
 
-        if context["buildingcategory"] == "Flat" or (len(floor_set) == 1 and "0" not in floor_set):  # unit may be a FLAT because ground floor is not there
+        #if context["buildingcategory"] == "Flat" or (len(floor_set) == 1 and "0" not in floor_set):  # unit may be a FLAT because ground floor is not there
+        if context["propertytype"] == "Flat" or (len(floor_set) == 1 and "0" not in floor_set):  # unit may be a FLAT because ground floor is not there
             self.property_sub_type = "SHAREDPROPERTY"
             self.property_type = self.property_type + "." + self.property_sub_type
             self.no_of_floors = 2
@@ -263,7 +275,7 @@ class IkonPropertyV2(Property):
         #     func(self, context)
         # else:
         #     raise Exception("No Mapping function")
-        financial_year = context["session"].replace("-20", "-")
+       # financial_year = context["session"].replace("-20", "-")
         self.process_additional_details(context)
         self.process_owner_information(context)
         #self.process_exemption(context)  # for Patiala ExemptinCategory i.e. ownerType is present with each owner
@@ -290,20 +302,37 @@ class IkonPropertyV2(Property):
             "Non-Residential": "NONRESIDENTIAL",
             "COM":"NONRESIDENTIAL.COMMERCIAL",
             "RES":"RESIDENTIAL",
-            "MIX":"MIXED"
+            "MIX":"MIXED",
+            "Restaurant": "NONRESIDENTIAL.COMMERCIAL",
+            "Park":"MIXED",
+            "Petrol Pump": "NONRESIDENTIAL.COMMERCIAL",
+            "FLAT":"RESIDENTIAL",
+            "Godown": "NONRESIDENTIAL.INDUSTRIAL",
+            "Educational Institutions":"NONRESIDENTIAL.INSTITUTIONAL",
+            "Marriage Palace": "NONRESIDENTIAL.COMMERCIAL",
+            "Hotel": "NONRESIDENTIAL.COMMERCIAL",
+            "Gaushala":"NONRESIDENTIAL.COMMERCIAL",
+            "Parking": "NONRESIDENTIAL.COMMERCIAL",
+            "Mall": "NONRESIDENTIAL.COMMERCIAL",
+            "Under Construction Residential": "RESIDENTIAL",
+            "Under Construction Commercial": "NONRESIDENTIAL.COMMERCIAL",
+            "Under Construction": "MIXED",
+            "Religious": "NONRESIDENTIAL.INSTITUTIONAL",
+            "Municipal Corporation Property": "NONRESIDENTIAL.COMMERCIAL",
+            "Agriculture":"NONRESIDENTIAL.COMMERCIAL"
         }
         self.usage_category_minor = "None"
         self.usage_category_minor = None
-        if property_type == None and context["buildingcategory"] == "Residential House":
+        if property_type == None and context["propertytype"] == "Residential House":
             self.usage_category_major = "RESIDENTIAL"  # OBSOLETE in v2
             self.usage_category = "RESIDENTIAL"
-        elif context["buildingcategory"] == "Government building":
+        elif context["propertytype"] == "Government building":
             self.usage_category_major = "NONRESIDENTIAL"  # OBSOLETE in v2
             self.usage_category = "NONRESIDENTIAL.INSTITUTIONAL"
-        elif property_type == "COM" and (context["buildingcategory"] == "Industrial" or context["buildingcategory"]== "Godown" or context["buildingcategory"] == "Gas Godown"):
+        elif property_type == "COM" and (context["propertytype"] == "Industrial" or context["propertytype"]== "Godown" or context["propertytype"] == "Gas Godown"):
             self.usage_category_major = "NONRESIDENTIAL"  # OBSOLETE in v2
             self.usage_category = "NONRESIDENTIAL.INDUSTRIAL"
-        elif property_type == "COM" and (context["buildingcategory"] == "Educational Institutions") :
+        elif property_type == "COM" and (context["propertytype"] == "Educational Institutions") :
             self.usage_category_major = "NONRESIDENTIAL"  # OBSOLETE in v2
             self.usage_category = "NONRESIDENTIAL.INSTITUTIONAL"
         elif property_type == None:
@@ -331,10 +360,8 @@ class IkonPropertyV2(Property):
                 "INSTITUTIONALGOVERNMENT", "STATEGOVERNMENT"),
             "Trust Property": ("INSTITUTIONALPRIVATE","PRIVATETRUST"),
             "Religious Property": ("INSTITUTIONALPRIVATE","PRIVATETRUST"),
-            "Municipal Property": ("INSTITUTIONALGOVERNMENT","ULBGOVERNMENT")
-
-
-
+            "Municipal Property": ("INSTITUTIONALGOVERNMENT","ULBGOVERNMENT"),
+            "Municipal Corporation Property": ("INSTITUTIONALGOVERNMENT","ULBGOVERNMENT")
         }
 
         # INSTITUTIONALPRIVATE, PRIVATECOMPANY
@@ -467,14 +494,21 @@ OC_MAP = {
     "Vacant AreaLand": "UNOCCUPIED",
     "Vacant Plot": "UNOCCUPIED",
     "Vacant Plot(Commercial)": "UNOCCUPIED",
-    "Vacant Plot(Residential)": "UNOCCUPIED"
+    "Vacant Plot(Residential)": "UNOCCUPIED",
+    "Park": "UNOCCUPIED",
+    "Under Construction": "UNOCCUPIED",
+    "Under Construction Residential": "UNOCCUPIED",
+    "Under Construction Commercial": "UNOCCUPIED",
+    "Agriculture": "UNOCCUPIED"
 }
 
 BD_UNIT_MAP = {
     "Residential Houses": (None, None, None),
     "Residential House": (None, None, None),
+    "RES": (None, None, None),
     "Flat,Residential House": (None, None, None),
     "Flat": (None, None, None),
+    "FLAT": (None, None, None),
     # "Government buildings, including buildings of Government Undertakings, Board or Corporation": "",
     # Institutional Building,Community Hall,Social Clubs,Sports stadiums,Bus Stand, and Such like Building
     "Industrial (any manufacturing unit), educational institutions, and godowns": (
@@ -509,7 +543,10 @@ BD_UNIT_MAP = {
     "Godown": ("INDUSTRIAL","WAREHOUSE","WAREHOUSE"),
     "Educational Institutions": ("INSTITUTIONAL","EDUCATIONAL","OTHEREDUCATIONAL"),
     "Government building": ("INSTITUTIONAL","OTHERINSTITUTIONALSUBMINOR","OTHERINSTITUTIONAL"),
-    "Commercial Buildings except Multiplexes, Malls, Marriage Palaces,Residential House":("COMMERCIAL", "OTHERCOMMERCIALSUBMINOR", "OTHERCOMMERCIAL")
+    "Commercial Buildings except Multiplexes, Malls, Marriage Palaces,Residential House":("COMMERCIAL", "OTHERCOMMERCIALSUBMINOR", "OTHERCOMMERCIAL"),
+    "COM": ("COMMERCIAL", "OTHERCOMMERCIALSUBMINOR", "OTHERCOMMERCIAL"),
+    "Park": (None, None, None),
+    "Agriculture": (None, None, None),
 }
 
 
@@ -517,34 +554,44 @@ def parse_owners_information(text):
     # text = text or """ASHOK KUMAR / ACHHRU RAM / 9779541015JEET KUMARI / W/O ASHOK KUMAR / 9779541015"""
 
     #info = list(map(str.strip, owner_pattern.split(text, 3)))
-    info = list(map(str.strip, text.split("/",10)))
+    info = list(map(str.strip, text.split("!",20)))
     owners = []
 
     pat = re.compile("^\d+|^N/?A")
 
-    while "/" in info[-1]:
+    while "!" in info[-1]:
+        last=info[-2].rsplit(' ',1)
+        info[-2]=info[-2].replace(last[-1],"")
+        info[-1]=last[-1]+ "!" + info[-1]
+
         last_element = info[-1]
-        # get the phone number
-        phone = pat.findall(last_element)
-        if len(phone) > 1:
-            raise Exception("Issue occured")
-        elif len(phone) == 1:
-            info[-1] = phone[0]
-        else:
-            info[-1] = ""
-            break
+
+
+        # # get the phone number
+        # phone = pat.findall(last_element)
+        # if len(phone) > 1:
+        #     raise Exception("Issue occured")
+        # elif len(phone) == 1:
+        #     info[-1] = phone[0]
+        # else:
+        #     info[-1] = ""
+        #     break
 
         split_index = len(info[-1])
 
-        if len(last_element) > split_index:
-            owners.append(info)
+        if len(last_element) >= split_index:
+            if info[0].find("Lease") == -1:    #Skip Lease information in owner
+                owners.append(info[0:len(info)-1])
+            info=list(map(str.strip, last_element.split("!",20)))
+
             #info = list(map(str.strip, owner_pattern.split(last_element[split_index:], 2)))
-            info = list(map(str.strip,last_element[split_index:].split("/",10)))
+            #info = list(map(str.strip,last_element[split_index:].split("!",20)))
         else:
             break
 
     if len(info) > 0:
-        owners.append(info)
+        if info[0].find("Lease") == -1: #Skip Lease information in owner
+            owners.append(info)
 
     return owners
 
@@ -557,38 +604,32 @@ def parse_flat_information(text):
     floors = []
     if text is None:  # if there floor info is None then return empty array, This is Patiala specific where floor infor may not present but leasedetail may present
         return  floors
-    info = list(map(str.strip, text.split("/", 7)))
+    info = list(map(str.strip, text.split("!", 9)))
     #info = info + info.split(" ", 1);
 
-    while "/" in info[-1]:
-        last_element = info[-1].strip().strip("/").strip()
+    while "!" in info[-1]:
+        last = info[-2].split(' ', 1)
+        info[-2] = info[-2].replace(last[-1], "")
+        info[-1] = last[-1] + "!" + info[-1]
 
-        # get the phone number
-        split_index = last_element.find(" ")
-        info[-1] = last_element[:split_index]
-        floors.append(info)
+        #last_element = info[-1].strip().strip("/").strip()
+        last_element = info[-1]
 
-        remaining =  last_element[split_index:].strip().strip("/").strip() # may be floor number is null
-        #check whether above variable 'remaining' is having first element as floorNumber if no then add empty floor number (because in mohali data floor number may not be there)
-        if remaining:
-            try:
-                first=(remaining.split("/"),1)[0]
-                float(first[0])
-                #means first element is float then we have to add empty floor number to complete floor set
-                remaining = " / " + remaining
-            except ValueError:
-                print("floor number ok")
-                #if value is not a float then its ok that first element is floor number
+        split_index = len(info[-1])
 
-        if remaining:
-            #info = list(map(str.strip, owner_pattern.split(remaining, 5)))
-            info = list(map(str.strip, remaining.split("/", 7)))
+
+
+
+        if len(last_element) >= split_index:
+            if info[3].find("Un Covered") == -1:  # Uncovered floor should not be treated as floor
+                floors.append(info[0:len(info) - 1])
+            info = list(map(str.strip, last_element.split("!", 9)))
         else:
-            info = None
             break
 
-    if info and len(info) == 8:
-        floors.append(info)
+    if len(info) > 0:
+        if info[3].find("Un Covered") == -1:  # Uncovered floor should not be treated as floor
+            floors.append(info)
 
     return floors
 

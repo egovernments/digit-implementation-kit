@@ -1,3 +1,7 @@
+------------------------------
+SURVEY DATA MIGRATION ONLY
+-----------------------------
+
 extra columns to demand
 	   (i) DocumentId in case of owner exemption
 	   
@@ -21,8 +25,8 @@ As Patiala records received contains manual enteries also for session 2018-19 or
 		   assuming higher this acknowledgement number, latest is the return date
 		6. update session column to 4-digit years by using formula ="20"&SUBSTITUTE(AM160,"-","-20") e.g. 2021-22 to 2021-2022
 		7. Some of Government Building received as ownertype(land_used_type) "Citizen Propery", it should be updated to Government property as under
-			select * from patiala_pt_legacy_data 
-			--update patiala_pt_legacy_data set landusedtype='State Government Property' 
+			select * from patiala_survey_data 
+			--update patiala_survey_data set landusedtype='State Government Property' 
 			where buildingcategory='Government building' and landusedtype='Citizen Property'
 		   
 		   
@@ -74,7 +78,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 ------------------------------------------------
 Preparing Legacy DB Data
 ------------------------------------------------
-CREATE TABLE patiala_pt_legacy_data (
+CREATE TABLE patiala_survey_data (
 		srno text,
 		returnid text,
 		acknowledgementno text,
@@ -88,45 +92,23 @@ CREATE TABLE patiala_pt_legacy_data (
 		address text,
 		floor text,
 		unbuiltarea text,
-		residentialrate text,
-		commercialrate text,
 		exemptioncategory text,
 		landusedtype text,
 		usage text,
 		plotarea text,
 		totalcoveredarea text,
-		grosstax text,
-		firecharges text,
-		interestamt text,
-		penalty text,
-		rebate text,
-		exemptionamt text,
-		taxamt text,
-		amountpaid text,
-		paymentmode text,
-				
-		chequeno text,
-		chequerealisationdate text,
-		chequestatus text,
-		cheque_remarks text, 
-		pos_tid text,
-		pos_invoiceno text,
-		
-		transactionid text,
-		bank text,
-		g8bookno text,
-		g8receiptno text,
-		paymentdate text,
 		propertytype text,
 		buildingcategory text,
-		session text,
 		remarks text,
 		businessname text,
 		waterconnectionno text,
 		electrictyconnectionno text,
 		photoid text,
 		client_data_id text,
-		height_above_36ft text,
+		name_of_surveyer,
+		mobile_detail,
+		other_detail,
+		
 			
 		----------------
 		uuid text default uuid_generate_v4(),
@@ -154,17 +136,13 @@ CREATE TABLE patiala_pt_legacy_data (
 		upload_response_assessment text
 	);
 
-CREATE INDEX IF NOT EXISTS idx_patiala_pt_legacy_data_uuid on patiala_pt_legacy_data(uuid);
-CREATE INDEX IF NOT EXISTS idx_patiala_pt_legacy_data_puuid on patiala_pt_legacy_data(parent_uuid);
-CREATE INDEX IF NOT EXISTS idx_patiala_pt_legacy_data_rno on patiala_pt_legacy_data(receipt_number);
-CREATE INDEX IF NOT EXISTS idx_patiala_pt_legacy_data_rstatus on patiala_pt_legacy_data(receipt_status);
-CREATE INDEX IF NOT EXISTS idx_patiala_pt_legacy_data_ustatus on patiala_pt_legacy_data(upload_status);
-CREATE INDEX IF NOT EXISTS idx_patiala_pt_legacy_data_session on patiala_pt_legacy_data(session);
-CREATE INDEX IF NOT EXISTS idx_patiala_pt_legacy_data_rid on patiala_pt_legacy_data(returnid);
-CREATE INDEX IF NOT EXISTS idx_patiala_pt_legacy_data_prid on patiala_pt_legacy_data(previous_returnid);
-CREATE INDEX IF NOT EXISTS idx_patiala_pt_legacy_data_csector on patiala_pt_legacy_data(colony, sector);
-CREATE INDEX IF NOT EXISTS idx_patiala_pt_legacy_data_locality on patiala_pt_legacy_data(new_locality_code);
-CREATE INDEX IF NOT EXISTS idx_patiala_pt_legacy_data_colony_processed on patiala_pt_legacy_data(colony_processed);
+CREATE INDEX IF NOT EXISTS idx_patiala_survey_data_uuid on patiala_survey_data(uuid);
+CREATE INDEX IF NOT EXISTS idx_patiala_survey_data_puuid on patiala_survey_data(parent_uuid);
+CREATE INDEX IF NOT EXISTS idx_patiala_survey_data_ustatus on patiala_survey_data(upload_status);
+CREATE INDEX IF NOT EXISTS idx_patiala_survey_data_rid on patiala_survey_data(returnid);
+CREATE INDEX IF NOT EXISTS idx_patiala_survey_data_csector on patiala_survey_data(colony, sector);
+CREATE INDEX IF NOT EXISTS idx_patiala_survey_data_locality on patiala_survey_data(new_locality_code);
+CREATE INDEX IF NOT EXISTS idx_patiala_survey_data_colony_processed on patiala_survey_data(colony_processed);
 
 CREATE TABLE patiala_boundary (
 		code text,
@@ -180,9 +158,9 @@ CREATE INDEX IF NOT EXISTS idx_patiala_boundary_sector on patiala_boundary(secto
 CREATE INDEX IF NOT EXISTS idx_patiala_boundary_colony_processed on patiala_boundary(colony_processed);
 
 -- Set the FILLFACTOR to 50% so large updates don't take time
-	ALTER TABLE patiala_pt_legacy_data SET (FILLFACTOR = 50);
-	VACUUM FULL patiala_pt_legacy_data;
-	REINDEX TABLE patiala_pt_legacy_data;
+	ALTER TABLE patiala_survey_data SET (FILLFACTOR = 50);
+	VACUUM FULL patiala_survey_data;
+	REINDEX TABLE patiala_survey_data;
 ```
 
 
@@ -197,7 +175,7 @@ returnid,previous_returnid,acknowledgementno,entrydate,zone,sector,colony,housen
 
 
 ```pgsql
-	COPY patiala_pt_legacy_data(returnid,previous_returnid,acknowledgementno,entrydate,zone,sector,colony,houseno,owner,leasedetail,address,floor,unbuiltarea,exemptioncategory,landusedtype,usage,plotarea,totalcoveredarea,grosstax,firecharges,interestamt,penalty,rebate,exemptionamt,taxamt,paymentmode,chequeno,
+	COPY patiala_survey_data(returnid,previous_returnid,acknowledgementno,entrydate,zone,sector,colony,houseno,owner,leasedetail,address,floor,unbuiltarea,exemptioncategory,landusedtype,usage,plotarea,totalcoveredarea,grosstax,firecharges,interestamt,penalty,rebate,exemptionamt,taxamt,paymentmode,chequeno,
 		chequerealisationdate,
 		chequestatus,
 		cheque_remarks, 
@@ -207,11 +185,11 @@ returnid,previous_returnid,acknowledgementno,entrydate,zone,sector,colony,housen
 	WITH (format csv, QUOTE '"', header);
 	```
 
-select * from  patiala_pt_legacy_data
+select * from  patiala_survey_data
 
 Some of Government Building received as ownertype(land_used_type) "Citizen Propery", it should be updated to Government property as under
-			select * from patiala_pt_legacy_data 
-			--update patiala_pt_legacy_data set landusedtype='State Government Property' 
+			select * from patiala_survey_data 
+			--update patiala_survey_data set landusedtype='State Government Property' 
 			where buildingcategory='Government building' and landusedtype='Citizen Property'
 		   
 
@@ -220,9 +198,9 @@ Some of Government Building received as ownertype(land_used_type) "Citizen Prope
 
 
 	```pgsql
-	update patiala_pt_legacy_data set uuid = uuid_generate_v4();
+	update patiala_survey_data set uuid = uuid_generate_v4();
 
-	update patiala_pt_legacy_data set 
+	update patiala_survey_data set 
 	new_propertyid = NULL, upload_status = NULL, receipt_status = NULL, receipt_number = NUll, receipt_request = null, receipt_response = null, req_json = Null, parent_uuid = Null, upload_response = null;
 	```
 
@@ -231,8 +209,8 @@ Some of Government Building received as ownertype(land_used_type) "Citizen Prope
 	--------------------------------------
 	patiala SPECIAL CASE
 	-------------------------------------------
-	update patiala_pt_legacy_data set upload_status='WONT_UPLOAD' where acknowledgementno::int not in 
-	(select max(acknowledgementno::int) as ackno from patiala_pt_legacy_data 
+	update patiala_survey_data set upload_status='WONT_UPLOAD' where acknowledgementno::int not in 
+	(select max(acknowledgementno::int) as ackno from patiala_survey_data 
 	group by returnid
 	)
 	--------------------------------------
@@ -245,41 +223,41 @@ Some of Government Building received as ownertype(land_used_type) "Citizen Prope
 	----------------------
 	patiala SPECIAL CASE FOR BELOW QUERIES
 	-----------------------------------------------
-	update  patiala_pt_legacy_data as pt1  set parent_uuid = (select max(uuid) from patiala_pt_legacy_data pt2
+	update  patiala_survey_data as pt1  set parent_uuid = (select max(uuid) from patiala_survey_data pt2
 	where pt2.ReturnId = pt1.ReturnId  and Session = '2013-2014' group by pt2.ReturnId)
 	where Session = '2014-2015';
 
 
-	update  patiala_pt_legacy_data as pt1  set parent_uuid = (select max(uuid) from patiala_pt_legacy_data pt2
+	update  patiala_survey_data as pt1  set parent_uuid = (select max(uuid) from patiala_survey_data pt2
 	where pt2.ReturnId = pt1.ReturnId  and Session = '2014-2015' group by pt2.ReturnId)
 	where Session = '2015-2016';
 
 
-	update  patiala_pt_legacy_data as pt1  set parent_uuid = (select max(uuid) from patiala_pt_legacy_data pt2
+	update  patiala_survey_data as pt1  set parent_uuid = (select max(uuid) from patiala_survey_data pt2
 	where pt2.ReturnId = pt1.ReturnId  and Session = '2015-2016' group by pt2.ReturnId)
 	where Session = '2016-2017';
 
-	update  patiala_pt_legacy_data as pt1  set parent_uuid = (select max(uuid) from patiala_pt_legacy_data pt2
+	update  patiala_survey_data as pt1  set parent_uuid = (select max(uuid) from patiala_survey_data pt2
 	where pt2.ReturnId = pt1.ReturnId  and Session = '2016-2017' group by pt2.ReturnId)
 	where Session = '2017-2018';
 
 
-	update  patiala_pt_legacy_data as pt1  set parent_uuid = (select max(uuid) from patiala_pt_legacy_data pt2
+	update  patiala_survey_data as pt1  set parent_uuid = (select max(uuid) from patiala_survey_data pt2
 	where pt2.ReturnId = pt1.ReturnId  and Session = '2017-2018' group by pt2.ReturnId)
 	where Session = '2018-2019';
 
 
-	update  patiala_pt_legacy_data as pt1  set parent_uuid = (select max(uuid) from patiala_pt_legacy_data pt2
+	update  patiala_survey_data as pt1  set parent_uuid = (select max(uuid) from patiala_survey_data pt2
 	where pt2.ReturnId = pt1.ReturnId  and Session = '2018-2019' group by pt2.ReturnId)
 	where Session = '2019-2020';
 
 
-	update  patiala_pt_legacy_data as pt1  set parent_uuid = (select max(uuid) from patiala_pt_legacy_data pt2
+	update  patiala_survey_data as pt1  set parent_uuid = (select max(uuid) from patiala_survey_data pt2
 	where pt2.ReturnId = pt1.ReturnId  and Session = '2019-2020' group by pt2.ReturnId)
 	where Session = '2020-2021';
 
 
-	update  patiala_pt_legacy_data as pt1  set parent_uuid = (select max(uuid) from patiala_pt_legacy_data pt2
+	update  patiala_survey_data as pt1  set parent_uuid = (select max(uuid) from patiala_survey_data pt2
 	where pt2.ReturnId = pt1.ReturnId  and Session = '2020-2021' group by pt2.ReturnId)
 	where Session = '2021-2022';
 
@@ -309,53 +287,53 @@ Some of Government Building received as ownertype(land_used_type) "Citizen Prope
 	patiala SPECIAL CASE
 	---------------------
 
-	update patiala_pt_legacy_data set colony_processed=regexp_replace(regexp_replace(trim(upper(colony)),'[^a-zA-Z0-9]+', ' ','g'),'\s+', ' ')
+	update patiala_survey_data set colony_processed=regexp_replace(regexp_replace(trim(upper(colony)),'[^a-zA-Z0-9]+', ' ','g'),'\s+', ' ')
 
 
 	update patiala_boundary set colony_processed = regexp_replace(regexp_replace(trim(upper(colony)),'[^a-zA-Z0-9]+', ' ','g'),'\s+', ' ')
 
 	PATIALA SPECIAL LOCALITY CODE MATCHING
 	---------------------------------
-	select * from patiala_pt_legacy_data as pt1 set new_locality_code = (
-		select code from patiala_boundary jb,patiala_pt_legacy_data as pt1 
+	select * from patiala_survey_data as pt1 set new_locality_code = (
+		select code from patiala_boundary jb,patiala_survey_data as pt1 
 		where  jb.colony_processed = pt1.colony_processed and  jb.sector = pt1.sector  and jb.area=upper(replace(pt1.zone,' ',''))
 	)where new_locality_code isnull;
 	
 	1.
-	update patiala_pt_legacy_data as pt1 set new_locality_code = (
+	update patiala_survey_data as pt1 set new_locality_code = (
 		select code from patiala_boundary jb where  jb.colony_processed = pt1.colony_processed and  jb.sector = pt1.sector  and jb.area=upper(replace(pt1.zone,' ',''))
 	)where new_locality_code isnull;
 	------------
 
 	2.
-	update patiala_pt_legacy_data as pt1 set new_locality_code = (
+	update patiala_survey_data as pt1 set new_locality_code = (
 		select code from patiala_boundary jb where  pt1.colony_processed=jb.colony_processed  and jb.area=upper(replace(pt1.zone,' ','')) order by area limit 1
 	)where new_locality_code isnull;
 
 	----------------------------
 	3.
-	update patiala_pt_legacy_data as pt1 set new_locality_code = (
+	update patiala_survey_data as pt1 set new_locality_code = (
 		select code from patiala_boundary jb where  pt1.colony_processed=jb.colony_processed   order by area limit 1
 	)where new_locality_code isnull;
 	--------------------------
 
 	4.
-	update patiala_pt_legacy_data set new_locality_code = 'UNKNOWN' where new_locality_code isnull;
+	update patiala_survey_data set new_locality_code = 'UNKNOWN' where new_locality_code isnull;
 
 
 	-------------------------
 	OBSOLETE
-	update patiala_pt_legacy_data as pt1 set new_locality_code = (
+	update patiala_survey_data as pt1 set new_locality_code = (
 		select code from patiala_boundary jb where  jb.colony_processed = pt1.colony_processed and  jb.sector = pt1.sector
 	)where new_locality_code isnull;
 
-	update patiala_pt_legacy_data as pt1 set new_locality_code = (
+	update patiala_survey_data as pt1 set new_locality_code = (
 		select code from patiala_boundary jb where  pt1.colony_processed=jb.colony_processed  limit 1
 	)where new_locality_code isnull;
 
-	update patiala_pt_legacy_data set new_locality_code = 'UNKNOWN' where new_locality_code isnull;
+	update patiala_survey_data set new_locality_code = 'UNKNOWN' where new_locality_code isnull;
 
-	update patiala_pt_legacy_data set new_locality_code = 'UNKNOWN' where new_locality_code isnull and parent_uuid isnull;
+	update patiala_survey_data set new_locality_code = 'UNKNOWN' where new_locality_code isnull and parent_uuid isnull;
 	-------------------------------------------
 
 
@@ -365,21 +343,21 @@ Some of Government Building received as ownertype(land_used_type) "Citizen Prope
 	```
 	checking localities should have been updated according to correct block and area as more than one colonies may have same name
 
-	select new_locality_code,count(*) from patiala_pt_legacy_data group by new_locality_code
+	select new_locality_code,count(*) from patiala_survey_data group by new_locality_code
 
 	select * from patiala_boundary
 
-	select distinct colony_processed from patiala_pt_legacy_data where new_locality_code='UNKNOWN'
+	select distinct colony_processed from patiala_survey_data where new_locality_code='UNKNOWN'
 
-	select * from patiala_pt_legacy_data where colony is null
+	select * from patiala_survey_data where colony is null
 
 	-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	```pgsql
 
 	patiala SPECIAL CASE
 	---------------------------
-	update patiala_pt_legacy_data set upload_status='WONT_UPLOAD' where acknowledgementno::int not in 
-	(select max(acknowledgementno::int) as ackno from patiala_pt_legacy_data 
+	update patiala_survey_data set upload_status='WONT_UPLOAD' where acknowledgementno::int not in 
+	(select max(acknowledgementno::int) as ackno from patiala_survey_data 
 	group by returnid
 	)
 	----------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -390,9 +368,9 @@ Some of Government Building received as ownertype(land_used_type) "Citizen Prope
 	-- Potgresql code block below will fix this 
 	--sql block
 
-	add two temporary columns in patiala_pt_legacy_data as owner_brushed and owner_multi_temp
+	add two temporary columns in patiala_survey_data as owner_brushed and owner_multi_temp
 
-	update patiala_pt_legacy_data set owner_brushed = owner
+	update patiala_survey_data set owner_brushed = owner
 
 
 	DO $$
@@ -405,7 +383,7 @@ Some of Government Building received as ownertype(land_used_type) "Citizen Prope
 	 BEGIN
 	  raise notice 'started';
 	  counter := 0;
-	  FOR owners IN select owner_brushed,returnid,session from patiala_pt_legacy_data
+	  FOR owners IN select owner_brushed,returnid,session from patiala_survey_data
 	  LOOP
 		   if owners.owner_brushed is null then
 			 continue; 
@@ -422,7 +400,7 @@ Some of Government Building received as ownertype(land_used_type) "Citizen Prope
 		   end if;
 		   raise notice 'processed record no % ',counter;
 		   counter := counter + 1;
-		   update patiala_pt_legacy_data set owner_multi_temp=actual_owners where returnid=owners.returnid and session=owners.session;
+		   update patiala_survey_data set owner_multi_temp=actual_owners where returnid=owners.returnid and session=owners.session;
 		  -- raise notice 'actual owner % ******* % ',actual_owners,owners.owner_brushed;	   
 	  END LOOP;
 	END$$;
@@ -430,26 +408,54 @@ Some of Government Building received as ownertype(land_used_type) "Citizen Prope
 
 	-- now actual owners format is in owner_multi_temp column, we can update actual owners as
 
-	update patiala_pt_legacy_data set owner=owner_multi_temp
+	update patiala_survey_data set owner=owner_multi_temp
 
-	update patiala_pt_legacy_data set owner=LTRIM(owner) where owner like ' %'  -- remove initial blank space in owners
+	update patiala_survey_data set owner=LTRIM(owner) where owner like ' %'  -- remove initial blank space in owners
 
 	--now we can remove the columns owner_brushed and owner_multi_temp
 
 
 	-- Floors are found to be concatenated with '#' therefore '#' has to be replaced by ' '
 
-	update patiala_pt_legacy_data set floor=replace(floor,'#',' ')
-	update patiala_pt_legacy_data set leasedetail=replace(leasedetail,'#',' ')
+	update patiala_survey_data set floor=replace(floor,'#',' ')
+	update patiala_survey_data set leasedetail=replace(leasedetail,'#',' ')
+
+
+update patiala_survey_data set propertytype='RES' WHERE floor not like '%Commercial%' and floor like '%Residential%'
+update patiala_survey_data set propertytype='COM' WHERE floor like '%Commercial%' and floor not like '%Residential%'
+update patiala_survey_data set propertytype='MIX' WHERE floor like '%Commercial%' and floor like '%Residential%'
+update patiala_survey_data set propertytype='FLAT'  where floor like '%!Flat!%' and propertytype is null
+update patiala_survey_data set propertytype='Government building'  where floor like '%Government building%' and propertytype is null
+update patiala_survey_data set propertytype='Park'  where floor like '%!Park!%' and propertytype is null
+update patiala_survey_data set propertytype='Religious'  where floor like '%Religious purposes%' and propertytype is null
+update patiala_survey_data set propertytype='Municipal Corporation Property'  where floor like '%Municipal corporation%' and propertytype is null
+update patiala_survey_data set propertytype='Marriage Palace'  where floor like '%Marriage Palace%' and propertytype is null
+update patiala_survey_data set propertytype='Industrial'  where floor like '%Industrial%' and propertytype is null
+update patiala_survey_data set propertytype='Agriculture'  where propertytype is null and usage='Vacant Plot'and floor like '%Land used for agricultural%'
+update patiala_survey_data set propertytype='Agriculture'  where propertytype is null and floor like '%Land used for agricultural%'
+update patiala_survey_data set propertytype='Restaurant'  where propertytype is null and floor like '%Restaurant%'
+update patiala_survey_data set propertytype='Educational Institutions'  where propertytype is null and floor like '%Educational%'
+update patiala_survey_data set propertytype='Petrol Pump'  where propertytype is null and floor like '%Petrol Pump%'
+update patiala_survey_data set propertytype='Educational Institutions'  where propertytype is null and floor like '%State Government Schools%'
+update patiala_survey_data set propertytype='Government building'  where propertytype is null and floor like '%State Government Hospitals%'
+update patiala_survey_data set propertytype='Godown'  where propertytype is null and floor like '%Godown%'
+update patiala_survey_data set propertytype='Gaushala'  where propertytype is null and floor like '%Gaushala%'
+update patiala_survey_data set propertytype='Under Construction'  where propertytype is null and floor like '%Under Construction%'
+update patiala_survey_data set propertytype='Parking'  where propertytype is null and floor like '%Parking%'
+update patiala_survey_data set propertytype='Hotel'  where propertytype is null and floor like '%Hotel%'
+update patiala_survey_data set propertytype='Mall'  where propertytype is null and floor like '%Mall%'
+update  patiala_survey_data set  propertytype='Under Construction Commercial' where other_detail like '%Commercial%' and propertytype='Under Construction'
+update  patiala_survey_data set  propertytype='Under Construction Residential' where other_detail like '%Residential%' and propertytype='Under Construction'
+
 
 	Check before execution 
 	----------------------------
-	--update patiala_pt_legacy_data set owner=replace(owner,'Not Provided / Not Applicable','NA') 
-	--select owner from patiala_pt_legacy_data
+	--update patiala_survey_data set owner=replace(owner,'Not Provided / Not Applicable','NA') 
+	--select owner from patiala_survey_data
 	where owner like '%Not Provided / Not Applicable%'
 
 
-	select floor,leasedetail from patiala_pt_legacy_data where leasedetail is not null and upload_status is null
+	select floor,leasedetail from patiala_survey_data where leasedetail is not null and upload_status is null
 	---------------------------------------------------
 
 
@@ -469,7 +475,7 @@ Some of Government Building received as ownertype(land_used_type) "Citizen Prope
 	In the DB assign the batch id to each record (assumed 10 in this case)
 
 	```PGSQL
-	update patiala_pt_legacy_data set batchname =('{1,2,3,4,5,6,7,8,9,10}'::text[])[ceil(random()*10)] where upload_status is null;
+	update patiala_survey_data set batchname =('{1,2,3,4,5,6,7,8,9,10}'::text[])[ceil(random()*10)] where upload_status is null;
 	```
 
 	After installing all the requirements, update the `run_pt_upload.sh`, use first with `DRY_RUN=True`, once the upload starts working use `DRY_RUN=False`  and use `BATCH_PARALLEL` to increase the number of parallel jobs 
