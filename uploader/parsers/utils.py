@@ -51,6 +51,15 @@ FLOOR_MAP = {
     "Ground Floor - Vacant In Use": "0",
     "Ground Floor": "0",
     "GROUN FLOOR": "0",
+    "GROUND FLOOR": "0",
+    "Ground Floor": "0",
+    "First Floor" : "1",
+    "Second Floor": "2",
+    "Third Floor": "3",
+    "Thard Floor": "3",
+    "Fourth Floor": "4",
+    "Forth Floor": "4",
+    "Fifth Floor": "5",
     "Basement 2": "-2",
     "Basement 1": "-1",
     "Basement 3": "-3",
@@ -79,6 +88,7 @@ FLOOR_MAP = {
     "3rd Floor": "3",
     "2nd Floor": "2",
     "1st Floor": "1",
+
 }
 
 

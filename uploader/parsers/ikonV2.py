@@ -19,10 +19,11 @@ class IkonPropertyV2(Property):
         #})]
 
     def process_additional_details(self, context):
-        self.old_property_id = "{}".format(context["returnid"])
+        self.old_property_id = "SURVEY_{}".format(context["returnid"])
         self.additional_details = {
             "legacyInfo": {
                 "returnid": context["returnid"],
+                "previousreturnid": context["previous_returnid"],
                 "session": context["session"],
                 "taxamt": context["taxamt"],
                 "acknowledgementno": context["acknowledgementno"],
@@ -34,13 +35,15 @@ class IkonPropertyV2(Property):
                 "amountpaid": context["amountpaid"],
                 "waterconnectionno": context["waterconnectionno"],
                 "electricityconnectionno": context["electricityconnectionno"],
+                "sewerageconnectionno":context["sewerageconnectionno"],
+                "businessname":context["businessname"],
                 "address": context["address"]
             }
         }
 
     def process_usage(self, context):
         #pd = self.property_details[0]
-        if context["usage"] == "Vacant Plot":
+        if context["usage"] == "Vacant Plot" or context["usage"] =="VACANT PLOT":
             self.property_type = "VACANT"
             self.no_of_floors = 1
         else:
@@ -102,21 +105,25 @@ class IkonPropertyV2(Property):
 
             building_category = context["buildingcategory"]
 
-            for floor, covered_area, usage in parse_flat_information(context["floor"]):
+            for floor, covered_area, usage,occupancy,builttype in parse_flat_information(context["floor"]):
                 if "- VACANT" in floor.upper():
                     continue   # to skip any vacant area on floor (Basicaly ...Ground Floor - Vacant... floors are not to be added and assumed to be calculated automaticaly)
-                construction_detail=ConstructionDetail(built_up_area=float(covered_area) / 9)
+                if(float(covered_area)<=1): # if covered area is 0 then set to 10 by default
+                    construction_detail=ConstructionDetail(built_up_area=float("10"))
+                else:
+                    construction_detail = ConstructionDetail(built_up_area=float(covered_area))
+
                 unit = Unit(floor_no=get_floor_number(floor),
-                            #occupancy_type=OC_MAP[occupancy],
-                            occupancy_type="SELFOCCUPIED",
+                            occupancy_type=OC_MAP[occupancy],
+                            #occupancy_type="SELFOCCUPIED",
                             construction_detail=construction_detail)
 
-                #if OC_MAP[occupancy] == "RENTED":
-                #    unit.arv = round(float(tax) * (100 / 7.5), 2)
+                if OC_MAP[occupancy] == "RENTED":
+                    unit.arv = 2000000   #As for Abohar Rent information is not available therefore fix rent 20 Lac is being migrated
 
-                #     if unit.arv == 0:
-                #        unit.arv = None
-                #        unit.occupancy_type = "UNOCCUPIED"
+                  #   if unit.arv == 0:
+                  #      unit.arv = None
+                  #      unit.occupancy_type = "UNOCCUPIED"
 
                 floor_set.add(get_floor_number(floor))
 
@@ -187,6 +194,7 @@ class IkonPropertyV2(Property):
 
         PT_MAP = {
             "Mix-Use": "MIXED",
+            "Mix Use": "MIXED",
             "Residential": "RESIDENTIAL",
             "0": "RESIDENTIAL",
             "Industrial": "NONRESIDENTIAL",
@@ -312,29 +320,41 @@ class IkonPropertyV2(Property):
 
 OC_MAP = {
     "Self Occupied": "SELFOCCUPIED",
+    "Self": "SELFOCCUPIED",
     "Un-Productive": "UNOCCUPIED",
     "Rented": "RENTED",
+    "Rent": "RENTED",
     "Vacant AreaLand": "UNOCCUPIED"
 }
 
 BD_UNIT_MAP = {
     "Residential Houses": (None, None, None),
+    "Residential": (None, None, None),
+    "RESIDENTIAL": (None, None, None),
     # "Government buildings, including buildings of Government Undertakings, Board or Corporation": "",
     "Industrial (any manufacturing unit), educational institutions, and godowns": (
         "INDUSTRIAL", "OTHERINDUSTRIALSUBMINOR", "OTHERINDUSTRIAL"),
     "INDUSTRY":("INDUSTRIAL", "OTHERINDUSTRIALSUBMINOR", "OTHERINDUSTRIAL"),
+    "industrial":("INDUSTRIAL", "OTHERINDUSTRIALSUBMINOR", "OTHERINDUSTRIAL"),
+    "Industrial":("INDUSTRIAL", "OTHERINDUSTRIALSUBMINOR", "OTHERINDUSTRIAL"),
     "Commercial buildings including Restaurants (except multiplexes, malls, marriage palaces)": (
         "COMMERCIAL", "OTHERCOMMERCIALSUBMINOR", "OTHERCOMMERCIAL"),
+    "Commercial": ("COMMERCIAL", "OTHERCOMMERCIALSUBMINOR", "OTHERCOMMERCIAL"),
+    "COMMERCIAL": ("COMMERCIAL", "OTHERCOMMERCIALSUBMINOR", "OTHERCOMMERCIAL"),
     "Flats": (""),
     "Hotels - Having beyond 50 rooms": ("COMMERCIAL", "HOTELS", None),
     "Others": ("COMMERCIAL", "OTHERCOMMERCIALSUBMINOR", "OTHERCOMMERCIAL"),
     # "Mix-Use Building used for multiple purposes (like Residential+Commercial+Industrial)": "",
     "Institutional buildings (other than educational institutions), including community halls/centres, sports stadiums, social clubs, bus stands, gold clubs, and such like buildings used for public purpose": (
         "INSTITUTIONAL", "OTHERINSTITUTIONALSUBMINOR", "OTHERINSTITUTIONAL"),
+    "Institutional": ("INSTITUTIONAL", "OTHERINSTITUTIONALSUBMINOR", "OTHERINSTITUTIONAL"),
+    "institutional": ("INSTITUTIONAL", "OTHERINSTITUTIONALSUBMINOR", "OTHERINSTITUTIONAL"),
     "Hotels - Having 50 rooms or below": ("COMMERCIAL", "HOTELS", None),
     "Multiplex, Malls, Shopping Complex/Center etc.": ("COMMERCIAL", "RETAIL", "MALLS"),
     "Vacant Plot": (None, None, None),
-    "Marriage Palaces": ("COMMERCIAL", "EVENTSPACE", "MARRIAGEPALACE")
+    "VACANT PLOT": (None, None, None),
+    "Marriage Palaces": ("COMMERCIAL", "EVENTSPACE", "MARRIAGEPALACE"),
+    "Agriculture Land": (None, None, None)
 }
 
 
@@ -375,13 +395,13 @@ def parse_owners_information(text):
 def parse_flat_information(text):
     # text = text or """Ground Floor / 1100.00 / Residential / Self Occupied / Pucca / 939.58Ground Floor - Vacant In Use / 250.00 / Residential / Self Occupied / Pucca / 185.421st Floor / 1100.00 / Residential / Self Occupied / Pucca / 613.252nd Floor / 1100.00 / Residential / Self Occupied / Pucca / 368.50"""
 
-    info = list(map(str.strip, owner_pattern.split(text, 3)))
+    info = list(map(str.strip, owner_pattern.split(text, 4)))
     floors = []
     while "/" in info[-1]:
         last_element = info[-1].strip().strip("/").strip()
 
         # get the phone number
-        split_index = last_element.find(".") + 3
+        split_index = last_element.find(" ") + 1
         info[-1] = last_element[:split_index]
         floors.append(info)
 
@@ -398,12 +418,12 @@ def parse_flat_information(text):
                 #if value is not a float then its ok that first element is floor number
 
         if remaining:
-            info = list(map(str.strip, owner_pattern.split(remaining, 5)))
+            info = list(map(str.strip, owner_pattern.split(remaining, 4)))
         else:
             info = None
             break
 
-    if info and len(info) == 3:
+    if info and len(info) == 5:
         floors.append(info)
 
     return floors
