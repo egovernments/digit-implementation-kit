@@ -17,8 +17,8 @@ dbpassword = os.getenv("DB_PASSWORD", "postgres")
 tenant = os.getenv("TENANT", "pb.patiala")
 city = os.getenv("CITY", "PATIALA")
 host = os.getenv("DB_HOST", "localhost")
-batch = os.getenv("BATCH_NAME", "2")
-table_name = os.getenv("TABLE_NAME", "patiala_survey_data")
+batch = os.getenv("BATCH_NAME", "18")
+table_name = os.getenv("TABLE_NAME", "patiala_survey_data_prod")
 default_phone = os.getenv("DEFAULT_PHONE", "9999999999")
 default_locality = os.getenv("DEFAULT_LOCALITY", "UNKNOWN")
 batch_size = os.getenv("BATCH_SIZE", "100")
@@ -121,46 +121,46 @@ def main():
                     # search property by acknowledgement number
 
                     #below loop id used as found property with status 'INWORKFLOW' is not successfully being searched in frequent
-                    # tryagain = True
-                    # while tryagain == True:
-                    #     try:
-                    #         request_data = {
-                    #             "RequestInfo": {
-                    #                        "authToken": access_token
-                    #                    }
-                    #                }
-                    #
-                    #         response = requests.post(
-                    #             urljoin(config.HOST, "/property-services/property/_search?acknowledgementIds="+ack_no+"&tenantId=pb.patiala"),
-                    #             json=request_data)
-                    #
-                    #         res=response.json()
-                    #
-                    #         property_added=res["Properties"][0]
-                    #         tryagain = False
-                    #     except Exception as ee:
-                    #         print("kafka problem, wait and retry")
-                    #         time.sleep(0.5)
-                    #         continue
-                    #
-                    # property_added["0"] = {"comment": "", "assignee": []}
-                    # property_added["workflow"] = {"id": None, "tenantId": "pb.patiala", "businessService": "PT.CREATE","businessId": ack_no, "action": "APPROVE", "moduleName": "PT","state": None, "comment": None, "documents": None, "assignes": None}
-                    #
-                    # request_data = {
-                    #     "RequestInfo": {
-                    #         "authToken": access_token
-                    #     },
-                    #
-                    #     "Property": property_added
-                    # }
-                    # # print(json.dumps(request_data, indent=2))
-                    # response = requests.post(
-                    #     urljoin(config.HOST, "/property-services/property/_update?tenantId="),
-                    #     json=request_data)
-                    #
-                    # res = response.json()
-                    # update_db_record(uuid, upload_response_workflow=json.dumps(res))  #storing response updating property status as ACTIVATE to approve property
-                    # print("APPROVED", pt_id)
+                    tryagain = True
+                    while tryagain == True:
+                         try:
+                             request_data = {
+                                 "RequestInfo": {
+                                            "authToken": access_token
+                                        }
+                                    }
+
+                             response = requests.post(
+                                 urljoin(config.HOST, "/property-services/property/_search?acknowledgementIds="+ack_no+"&tenantId=pb.patiala"),
+                                 json=request_data)
+
+                             res=response.json()
+
+                             property_added=res["Properties"][0]
+                             tryagain = False
+                         except Exception as ee:
+                             print("kafka problem, wait and retry")
+                             time.sleep(0.5)
+                             continue
+
+                    property_added["0"] = {"comment": "", "assignee": []}
+                    property_added["workflow"] = {"id": None, "tenantId": "pb.patiala", "businessService": "PT.CREATE","businessId": ack_no, "action": "APPROVE", "moduleName": "PT","state": None, "comment": None, "documents": None, "assignes": None}
+
+                    request_data = {
+                         "RequestInfo": {
+                             "authToken": access_token
+                         },
+
+                         "Property": property_added
+                     }
+                    # print(json.dumps(request_data, indent=2))
+                    response = requests.post(
+                         urljoin(config.HOST, "/property-services/property/_update?tenantId="),
+                         json=request_data)
+
+                    res = response.json()
+                    update_db_record(uuid, upload_response_workflow=json.dumps(res))  #storing response updating property status as ACTIVATE to approve property
+                    print("APPROVED", pt_id)
                     #
                     # # to create assessment(s)
                     #

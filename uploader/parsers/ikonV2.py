@@ -183,7 +183,7 @@ class IkonPropertyV2(Property):
                 #construction_detail = ConstructionDetail(built_up_area=float(covered_area) / 9)
                 #Sq. Yard on covered_area for Patiala
                 #Sq. Feet in covered_area for Patiala
-                construction_detail = ConstructionDetail(built_up_area=float(covered_area_ft))
+                construction_detail = ConstructionDetail(built_up_area=float(covered_area_ft)/9)
 
                 if construction_detail.built_up_area==float("0"):   # if builtuparea is "0" as in some patiala properties builtuparea is received as "0"
                     construction_detail = ConstructionDetail("18")
