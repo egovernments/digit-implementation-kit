@@ -11,14 +11,14 @@ from config import config
 from uploader.parsers.ikonV2 import IkonPropertyV2
 
 
-dbname = os.getenv("DB_NAME", "patiala_legacy_data")
+dbname = os.getenv("DB_NAME", "muktsar_survey_data")
 dbuser = os.getenv("DB_USER", "postgres")
 dbpassword = os.getenv("DB_PASSWORD", "postgres")
-tenant = os.getenv("TENANT", "pb.patiala")
-city = os.getenv("CITY", "PATIALA")
+tenant = os.getenv("TENANT", "pb.muktsar")
+city = os.getenv("CITY", "MUKTSAR")
 host = os.getenv("DB_HOST", "localhost")
-batch = os.getenv("BATCH_NAME", "18")
-table_name = os.getenv("TABLE_NAME", "patiala_survey_data_prod")
+batch = os.getenv("BATCH_NAME", "1")
+table_name = os.getenv("TABLE_NAME", "muktsar_pt_survey_data")
 default_phone = os.getenv("DEFAULT_PHONE", "9999999999")
 default_locality = os.getenv("DEFAULT_LOCALITY", "UNKNOWN")
 batch_size = os.getenv("BATCH_SIZE", "100")
@@ -131,7 +131,7 @@ def main():
                                     }
 
                              response = requests.post(
-                                 urljoin(config.HOST, "/property-services/property/_search?acknowledgementIds="+ack_no+"&tenantId=pb.patiala"),
+                                 urljoin(config.HOST, "/property-services/property/_search?acknowledgementIds="+ack_no+"&tenantId=pb.muktsar"),
                                  json=request_data)
 
                              res=response.json()
@@ -144,7 +144,7 @@ def main():
                              continue
 
                     property_added["0"] = {"comment": "", "assignee": []}
-                    property_added["workflow"] = {"id": None, "tenantId": "pb.patiala", "businessService": "PT.CREATE","businessId": ack_no, "action": "APPROVE", "moduleName": "PT","state": None, "comment": None, "documents": None, "assignes": None}
+                    property_added["workflow"] = {"id": None, "tenantId": "pb.muktsar", "businessService": "PT.CREATE","businessId": ack_no, "action": "APPROVE", "moduleName": "PT","state": None, "comment": None, "documents": None, "assignes": None}
 
                     request_data = {
                          "RequestInfo": {
