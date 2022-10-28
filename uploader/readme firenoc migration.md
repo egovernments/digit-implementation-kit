@@ -40,6 +40,9 @@ CREATE TABLE firenoc_zira_legacy_data
   upload_request text,
   upload_response text,
   additionaldetails text,
+  new_application_number text,
+  query1 text,
+  query2 text
 )
 
 
@@ -59,7 +62,17 @@ from applications
 inner join noc_issued on applications.application_id=noc_issued.application_no
 where applications.current_status='Approved'
 
-assigining uuids
--------------------
+assigining uuids and corrections
+-----------------------------------
 
 update firenoc_zira_legacy_data set uuid = uuid_generate_v4();
+update firenoc_zira_legacy_data set parking_area='0' where parking_area is null or parking_area='';
+
+
+
+
+After Migration queries to be executed are stored in query1 and query2 fields (queries will be like below)
+--------------------------------------------------------------------------------------------------------
+ update eg_fn_firenocdetail set status='APPROVED', financialyear='2021-22', validfrom=1544446974000, validto=1575829800000,issueddate=1544446974000 where uuid=(select uuid from eg_fn_firenocdetail where applicationNumber='PB-FN-2022-10-26-061179' and status='INITIATED' and tenantid='pb.zira');
+
+ update eg_fn_firenoc set firenocnumber='2203-100-Fire/58',oldfirenocnumber='FB/16/17' where uuid=(select firenocuuid from eg_fn_firenocdetail where applicationNumber='PB-FN-2022-10-26-061179'  and tenantid='pb.zira');

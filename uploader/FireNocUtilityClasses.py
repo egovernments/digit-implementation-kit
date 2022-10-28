@@ -26,7 +26,7 @@ class FireNocDetails:
         #self.process_propertydetails(context,district,subdistrict)
 
     def process_additional_details(self, context):
-        self.additional_details = {
+        self.additional_detail = {
             "lagacyInfo": {
                 "applicationid": context["application_id"],
                 "no_of_buildings": context["no_of_buildings"],
@@ -65,7 +65,8 @@ class FireNocDetails:
     def process_propertydetails(self, context, district,subdistrict):
         locality = Locality(code=context["localitycode"])
         #self.address = Address(city=city, door_no=context["houseno"], locality=locality)
-        address = Address(district=district, subdistrict=subdistrict, street=context["building_address"], locality=locality,areatype=context["areatype"])
+        #street allowed upto 254 charcaters only in api
+        address = Address(district=district, sub_district=subdistrict, street=context["building_address"][:254], locality=locality,area_type=context["areatype"])
         self.property_details=PropertyDetails( address)
     def process_applicantdetails(self,context):
         self.applicant_details=ApplicantDetails(context)
@@ -75,7 +76,7 @@ class FireNocDetails:
             "name": context["name_of_building"],
             "usageType": context["usagetype"],
             "usageSubType": context["usagesubtype"],
-            "uomMap": {
+            "uomsMap": {
                 "NO_OF_FLOORS": int(context["number_of_actual_floors"]),
                 "BUILTUP_AREA": float(context["builtup_area"]),
                 "NO_OF_BASEMENTS": int(context["number_of_basements"]),
@@ -99,19 +100,19 @@ class FireNocDetails:
                 {
                     "code": "NO_OF_FLOORS",
                     "value": int(context["number_of_actual_floors"]),
-                    "isActiveUom": True,
+                    "isActiveUom": False,
                     "active": True
                 },
                 {
                     "code": "NO_OF_BASEMENTS",
                     "value": int(context["number_of_basements"]),
-                    "isActiveUom": True,
+                    "isActiveUom": False,
                     "active": True
                 },
                 {
                     "code": "BUILTUP_AREA",
                     "value": int(float(context["covered_area_total"])),
-                    "isActiveUom": True,
+                    "isActiveUom": False,
                     "active": True
                 }
             ],
@@ -131,19 +132,19 @@ class Locality:
 
 
 class Address:
-    areatype: Optional[str]
+    area_type: Optional[str]
     city: Optional[str]
-    subdistrict: Optional[str]
+    sub_district: Optional[str]
     street: Optional[str]
     locality: Optional[Locality]
 
 
-    def __init__(self,  district: Optional[str] = None, subdistrict: Optional[str] = None,
+    def __init__(self,  district: Optional[str] = None, sub_district: Optional[str] = None,
                  street: Optional[str] = None, locality: Optional[Locality] = None,
-                 areatype: Optional[int] = None) -> None:
+                 area_type: Optional[int] = None) -> None:
         self.city = district
-        self.subdistrict=subdistrict
-        self.areatype = areatype
+        self.sub_district=sub_district
+        self.area_type = area_type
         self.street = street
         self.locality = locality
 
