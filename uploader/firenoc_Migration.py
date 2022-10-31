@@ -87,6 +87,9 @@ def main():
                                  validto=valid_upto, issueddate=valid_from, applicationNumber=applicationNumber, tenantid=subdistrict)
                 #updating query 2 : update eg_fn_firenoc set firenocnumber='1111-23455-Fire-2222',oldfirenocnumber='123',islegacy=true where uuid=(select firenocuuid from eg_fn_firenocdetail where applicationNumber='PB-FN-2022-10-11-103285'  and tenantid='pb.zira')
                 update_db_record_approve_application_query2(uuid,firenocnumber=json_data["new_noc_no"],oldfirenocnumber=json_data["old_noc_no"], applicationNumber=applicationNumber, tenantid=subdistrict)
+            else:  # record not uploaded
+                update_db_record(uuid, upload_response=json.dumps(res), upload_request=json.dumps(req),
+                                 upload_status="ERROR")
 
 
         except Exception as ex:

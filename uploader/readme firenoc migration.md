@@ -37,12 +37,12 @@ CREATE TABLE firenoc_zira_legacy_data
   owner_address text,
   applicant_contact_no text,
   upload_status text,
-  upload_request text,
-  upload_response text,
+  upload_request varchar(5000),
+  upload_response varchar(5000),
   additionaldetails text,
   new_application_number text,
-  query1 text,
-  query2 text
+  query1 varchar(3000),
+  query2 varchar(3000)
 )
 
 
