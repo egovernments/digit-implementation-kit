@@ -60,7 +60,7 @@ select applications.noc_type,building_address,'urban',fireStation_name as city,a
  Owner_name as Owner_name,concat(owner_address,',',owner_city,"','",owner_state) as owenr_address,Applicant_contact_no as contact_no
 from applications
 inner join noc_issued on applications.application_id=noc_issued.application_no
-where applications.current_status='Approved'
+where applications.current_status='Approved' 
 
 assigining uuids and corrections
 -----------------------------------
@@ -76,3 +76,5 @@ After Migration queries to be executed are stored in query1 and query2 fields (q
  update eg_fn_firenocdetail set status='APPROVED', financialyear='2021-22', validfrom=1544446974000, validto=1575829800000,issueddate=1544446974000 where uuid=(select uuid from eg_fn_firenocdetail where applicationNumber='PB-FN-2022-10-26-061179' and status='INITIATED' and tenantid='pb.zira');
 
  update eg_fn_firenoc set firenocnumber='2203-100-Fire/58',oldfirenocnumber='FB/16/17' where uuid=(select firenocuuid from eg_fn_firenocdetail where applicationNumber='PB-FN-2022-10-26-061179'  and tenantid='pb.zira');
+ 
+ update  eg_wf_processinstance_v2 set action='APPROVE',status='5d1b2519-0f69-401c-9726-292c3e9c6a59' where businessid='PB-FN-2022-11-03-104051';

@@ -87,6 +87,9 @@ def main():
                                  validto=valid_upto, issueddate=valid_from, applicationNumber=applicationNumber, tenantid=subdistrict)
                 #updating query 2 : update eg_fn_firenoc set firenocnumber='1111-23455-Fire-2222',oldfirenocnumber='123',islegacy=true where uuid=(select firenocuuid from eg_fn_firenocdetail where applicationNumber='PB-FN-2022-10-11-103285'  and tenantid='pb.zira')
                 update_db_record_approve_application_query2(uuid,firenocnumber=json_data["new_noc_no"],oldfirenocnumber=json_data["old_noc_no"], applicationNumber=applicationNumber, tenantid=subdistrict)
+                #udatingh query3 : update  eg_wf_processinstance_v2 set action='APPROVE',status='5d1b2519-0f69-401c-9726-292c3e9c6a59' where businessid='PB-FN-2022-11-03-104051';
+                update_db_record_approve_application_query3(uuid, firenocnumber=json_data["new_noc_no"],oldfirenocnumber=json_data["old_noc_no"],applicationNumber=applicationNumber, tenantid=subdistrict)
+
             else:  # record not uploaded
                 update_db_record(uuid, upload_response=json.dumps(res), upload_request=json.dumps(req),
                                  upload_status="ERROR")
@@ -126,5 +129,12 @@ def update_db_record_approve_application_query2(uuid,firenocnumber:Optional=None
     query2="update eg_fn_firenoc set firenocnumber='%s',oldfirenocnumber='%s' where uuid=(select firenocuuid from eg_fn_firenocdetail where applicationNumber='%s'  and tenantid='%s');"%(firenocnumber,oldfirenocnumber,applicationNumber,tenantid)
     update_db_record(uuid, query2=query2)
     pass
+
+def update_db_record_approve_application_query3(uuid,firenocnumber:Optional=None,oldfirenocnumber:Optional=None,applicationNumber:Optional[str]=None, tenantid:Optional[str]=None):
+    query3="update  eg_wf_processinstance_v2 set action='APPROVE',status='5d1b2519-0f69-401c-9726-292c3e9c6a59' where businessid='%s';"%(applicationNumber)
+    update_db_record(uuid, query3=query3)
+    pass
+
+
 
 main() #call to main function to start processing
