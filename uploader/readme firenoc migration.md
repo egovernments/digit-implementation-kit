@@ -52,12 +52,14 @@ noc_type,building_address,urban,city,subdistrict,localitycode,firestationid,name
 
 query to fetch data
 ---------------------
-select applications.noc_type,building_address,'urban',fireStation_name as city,area_tehsil_name as subdistrict,'UNKNOWN' as localitycode,'zira' as firestationid,
+select applications.noc_type,building_address,'Urban',fireStation_name as city,area_tehsil_name as subdistrict,'UNKNOWN' as localitycode,
+ 'zira' as firestationid,
  name_of_building as name,substring_index(building_category,".",1) as usageType,substring_index(building_category,".",-1) as usageSubType,
  height_in_mtr as height_of_building,
  number_of_actual_floors,number_of_basements,covered_area_total as builtup_area,land_area,covered_area_total,parking_Area as parking_Area,surrounding_left as leftSurrounding,surrounding_right as rightsurrunding,surrounding_back as back,surrounding_front as front,
  date_of_approval,application_id,payment_date as date_of_submission,old_noc_no,concat(applications.unique_application_number,'/',noc_no) as  new_noc_no,expiry_date as noc_valid_upto,unique_application_number as unique_application_id,
- Owner_name as Owner_name,concat(owner_address,',',owner_city,"','",owner_state) as owenr_address,Applicant_contact_no as contact_no
+ Owner_name as Owner_name,
+ concat(owner_address,',',owner_city,',',owner_state) as owenr_address,Applicant_contact_no as contact_no
 from applications
 inner join noc_issued on applications.application_id=noc_issued.application_no
 where applications.current_status='Approved' 

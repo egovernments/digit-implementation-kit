@@ -4,7 +4,7 @@ from tl_billing_slab_service import create_and_update_billing_slab
 
 
 tenants = [
-    "pb.testing"
+    "pb.zirakpur"
 ]
 
 
