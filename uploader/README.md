@@ -26,6 +26,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 CREATE TABLE public.jalandhar_pt_legacy_data (
     srno text,
+    propertyuid,
     returnid text,
     acknowledgementno text,
     entrydate text,
@@ -138,7 +139,7 @@ cat *.csv > combined.csv
 Open the `combined.csv` files and make sure the headers in below order
 
 ```csv
-returnid,previous_returnid,acknowledgementno,entrydate,zone,sector,colony,houseno,owner,floor,exemptioncategory,landusedtype,usage,plotarea,totalcoveredarea,grosstax,firecharges,interestamt,penalty,rebate,exemptionamt,taxamt,paymentmode,transactionid,g8bookno,g8receiptno,paymentdate,propertytype,session,buildingcategory
+propertyuid,returnid,previous_returnid,acknowledgementno,entrydate,zone,sector,colony,houseno,owner,floor,exemptioncategory,landusedtype,usage,plotarea,totalcoveredarea,grosstax,firecharges,interestamt,penalty,rebate,exemptionamt,taxamt,paymentmode,transactionid,g8bookno,g8receiptno,paymentdate,propertytype,session,buildingcategory
 ```
 
 If columns are not in this order, reorder them. After that import all the data into the DB using below command

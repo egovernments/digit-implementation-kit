@@ -17,7 +17,7 @@ dbpassword = os.getenv("DB_PASSWORD", "postgres")
 tenant = os.getenv("TENANT", "pb.ludhiana")
 city = os.getenv("CITY", "LUDHIANA")
 host = os.getenv("DB_HOST", "localhost")
-batch = os.getenv("BATCH_NAME", "1")
+batch = os.getenv("BATCH_NAME", "23")
 table_name = os.getenv("TABLE_NAME", "ludhiana_pt_legacy_data")
 default_phone = os.getenv("DEFAULT_PHONE", "9999999999")
 default_locality = os.getenv("DEFAULT_LOCALITY", "UNKNOWN")
@@ -27,7 +27,9 @@ batch_size = os.getenv("BATCH_SIZE", "100")
 dry_run = False
 
 connection = psycopg2.connect("dbname={} user={} password={} host={}".format(dbname, dbuser, dbpassword, host))
+connection_asmt = psycopg2.connect("dbname={} user={} password={} host={}".format(dbname, dbuser, dbpassword, host))
 cursor = connection.cursor()
+cursor_asmt = connection.cursor()
 postgresql_select_Query = """
 select row_to_json(pd) from {} as pd 
 where 
@@ -140,31 +142,48 @@ def main():
                     update_db_record(uuid, upload_response_workflow=json.dumps(res))  #storing response updating property status as ACTIVATE to approve property
                     print("APPROVED", pt_id)
 
-                    # to create assessment
-                    try:
-                        assessmentDate = dt.datetime.strptime(json_data["paymentdate"], "%d/%m/%Y").strftime(
-                            '%Y-%m-%d')
-                        assessmentTime = time.strptime(assessmentDate, '%Y-%m-%d')
-                        assementEpoch = time.mktime(assessmentTime) * 1000
-                    except Exception as eex:
-                        # continue  # skip this assessment as in mohali paymentdate or paymentmode NULL means only estimate was given
-                        assementEpoch = 946665000000  # 01-Jan-2000 default assessment epoch time
+                    # PREPARE QUERIES FOR ADDING ASSESSMENTS TO eg_pt_asmt_assessment TABLE
+                    postgresql_fetch_assessments_Query = "select row_to_json(asmt) from {} as asmt where propertyuid='{}'".format(table_name,p.survey_id )
+                    cursor_asmt.execute(postgresql_fetch_assessments_Query)
+                    data_asmt = cursor_asmt.fetchmany(20)
+                    qr=""  # query having all insert assessments query
+                    for row_asmt in data_asmt:
+                        json_asmt_data = row_asmt[0]
+                        pay_date=json_asmt_data["paymentdate"]
+                        sess=json_asmt_data["session"]
+                        assessment_date=int((dt.datetime.strptime(json_asmt_data["paymentdate"],'%d/%m/%Y')).timestamp()) * 1000  # epoch in milliseconds
+                        qr=qr+"insert into eg_pt_asmt_assessment(id,tenantid,assessmentnumber,financialyear,propertyid,status,source,channel,assessmentdate,createdby,createdtime,lastmodifiedby,lastmodifiedtime)  values (uuid_generate_v4(),'"+tenant+"','RID"+json_asmt_data["returnid"]+"-"+json_asmt_data["taxamt"]+"','"+sess+"','"+pt_id+"','ACTIVE','LEGACY','LEGACY','"+str(assessment_date)+"','LEGACY','"+str(assessment_date)+"','LEGACY','"+str(assessment_date)+"');"
+                        print ("assessment query added",sess);
 
 
-                    request_data={"RequestInfo": {"apiId": "Rainmaker", "ver": ".01", "ts": "", "action": "_create", "did": "1",
-                                  "key": "", "msgId": "20170310130900|en_IN",
-                                  "authToken": access_token
-                                                  },
-                                  "Assessment": {"tenantId": "pb.ludhiana", "propertyId": pt_id,
-                                  "financialYear": financial_year, "assessmentDate": assementEpoch,
-                                  "source": "LEGACY_RECORD", "channel": "LEGACY_MIGRATION", "additionalDetails": {}}}
-                    response = requests.post(
-                        urljoin(config.HOST, "/property-services/assessment/_create?tenantId=pb.ludhiana"),
-                        json=request_data)
+                    # out of above for loop, no update database cable to insert above qr Sting cotaining assessment create queries
+                    update_db_record(uuid, assessmentquery=qr);
 
-                    res = response.json()
-                    update_db_record(uuid, upload_response_assessment=json.dumps(res))  # creating assessment and storeing the response
-                    print("Assessment Created", pt_id)
+                    # # to create assessment
+                    # try:
+                    #     assessmentDate = dt.datetime.strptime(json_data["paymentdate"], "%d/%m/%Y").strftime(
+                    #         '%Y-%m-%d')
+                    #     assessmentTime = time.strptime(assessmentDate, '%Y-%m-%d')
+                    #     assementEpoch = time.mktime(assessmentTime) * 1000
+                    # except Exception as eex:
+                    #     # continue  # skip this assessment as in mohali paymentdate or paymentmode NULL means only estimate was given
+                    #     assementEpoch = 946665000000  # 01-Jan-2000 default assessment epoch time
+                    #
+                    #
+                    # request_data={"RequestInfo": {"apiId": "Rainmaker", "ver": ".01", "ts": "", "action": "_create", "did": "1",
+                    #               "key": "", "msgId": "20170310130900|en_IN",
+                    #               "authToken": access_token
+                    #                               },
+                    #               "Assessment": {"tenantId": "pb.ludhiana", "propertyId": pt_id,
+                    #               "financialYear": financial_year, "assessmentDate": assementEpoch,
+                    #               "source": "LEGACY_RECORD", "channel": "LEGACY_MIGRATION", "additionalDetails": {}}}
+                    # response = requests.post(
+                    #     urljoin(config.HOST, "/property-services/assessment/_create?tenantId=pb.ludhiana"),
+                    #     json=request_data)
+                    #
+                    # res = response.json()
+                    # update_db_record(uuid, upload_response_assessment=json.dumps(res))  # creating assessment and storeing the response
+                    # print("Assessment Created", pt_id)
 
                 else:
                     # Some error has occurred

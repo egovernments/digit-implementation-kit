@@ -12,6 +12,7 @@ class IkonPropertyV2(Property):
     def __init__(self, *args, **kwargs):
         super(IkonPropertyV2, self).__init__()
         self.owners = []
+        self.survey_id=None
         #self.additional_details = {}
         #self.property_details = [PropertyDetail(owners=[], additional_details={
         #    "inflammable": False,
@@ -20,9 +21,12 @@ class IkonPropertyV2(Property):
 
     def process_additional_details(self, context):
         self.old_property_id = "RID{}".format(context["returnid"])
+        self.survey_id = context["propertyuid"]
+
         self.additional_details = {
             "legacyInfo": {
                 "returnid": context["returnid"],
+                "propertyuid": context["propertyuid"],
                 "session": context["session"],
                 "taxamt": context["taxamt"],
                 "acknowledgementno": context["acknowledgementno"],
@@ -30,8 +34,9 @@ class IkonPropertyV2(Property):
                 "sector": context["sector"],
                 "exemptioncategory": context["exemptioncategory"],
                 "totalcoveredarea": context["totalcoveredarea"],
-                "grosstax": context["grosstax"],
-                "amountpaid": context["amountpaid"]
+                "grosstax": context["grosstax"]
+                #,
+                #"amountpaid": context["amountpaid"]
             }
         }
 
@@ -85,7 +90,10 @@ class IkonPropertyV2(Property):
 
     def process_floor_information(self, context):
         self.build_up_area = context["totalcoveredarea"]
-        floors = context["floor"].strip()
+        floors=None
+        if context["floor"]:
+            floors = context["floor"].strip()
+
         #pd: PropertyDetail = self.property_details[0]
         self.units = []
 
