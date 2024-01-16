@@ -152,12 +152,18 @@ def main():
                         pay_date=json_asmt_data["paymentdate"]
                         sess=json_asmt_data["session"]
                         assessment_date=int((dt.datetime.strptime(json_asmt_data["paymentdate"],'%d/%m/%Y')).timestamp()) * 1000  # epoch in milliseconds
-                        qr=qr+"insert into eg_pt_asmt_assessment(id,tenantid,assessmentnumber,financialyear,propertyid,status,source,channel,assessmentdate,createdby,createdtime,lastmodifiedby,lastmodifiedtime)  values (uuid_generate_v4(),'"+tenant+"','RID"+json_asmt_data["returnid"]+"-"+json_asmt_data["taxamt"]+"','"+sess+"','"+pt_id+"','ACTIVE','LEGACY','LEGACY','"+str(assessment_date)+"','LEGACY','"+str(assessment_date)+"','LEGACY','"+str(assessment_date)+"');"
-                        print ("assessment query added",sess);
+                        if json_asmt_data["g8bookno"]:
+                            receiptno=json_asmt_data["g8bookno"]+"/"+json_asmt_data["g8receiptno"]
+                        else:
+                            receiptno=json_asmt_data["transactionid"]
+
+                        assessment_number="RID"+json_asmt_data["returnid"]+"-"+json_asmt_data["taxamt"]+"-"+receiptno
+                        qr=qr+"insert into eg_pt_asmt_assessment(id,tenantid,assessmentnumber,financialyear,propertyid,status,source,channel,assessmentdate,createdby,createdtime,lastmodifiedby,lastmodifiedtime)  values (uuid_generate_v4(),'"+tenant+"','"+assessment_number+"','"+sess+"','"+pt_id+"','ACTIVE','LEGACY','LEGACY','"+str(assessment_date)+"','LEGACY','"+str(assessment_date)+"','LEGACY','"+str(assessment_date)+"');"
+                        print ("assessment query added",sess)
 
 
                     # out of above for loop, no update database cable to insert above qr Sting cotaining assessment create queries
-                    update_db_record(uuid, assessmentquery=qr);
+                    update_db_record(uuid, assessmentquery=qr)
 
                     # # to create assessment
                     # try:
