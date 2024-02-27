@@ -2,12 +2,14 @@ import datetime as dt
 import psycopg2
 import json
 import os
-from common import superuser_login
+from common import *
 
 from urllib.parse import urljoin
 import requests
 from config import config
 from uploader.parsers.WSConnections import WSConnection
+
+from uploader.parsers.ikonV2 import IkonPropertyV2
 
 dbname = os.getenv("DB_NAME", "ludhiana_legacy_data")
 dbuser = os.getenv("DB_USER", "postgres")
@@ -69,6 +71,36 @@ def main():
             uuid = json_data["uuid"]
             print('Processing {}'.format(uuid))
             print("property uid")
+            propertyid = json_data["new_propertyid"]
+            try:
+                url = "https://mseva-uat.lgpunjab.gov.in/property-services/property/_search?tenantId="+tenant+"&propertyIds="+propertyid+""
+                tenant_id = "pb.amritsar"
+                property_ids = "PT-107-1000810"
+
+                request_body = {
+                    'RequestInfo': {
+                        'apiId': 'Mihy',
+                        'ver': '.01',
+                        'action': '',
+                        'did': '1',
+                        'key': '',
+                        'msgId': '20170310130900|en_IN',
+                        'requesterId': '',
+                        "authToken": access_token
+                    }
+                }
+                property_response =requests.post(url, json=request_body)
+                if property_response.status_code == 200:
+                    print(property_response.json())
+                else:
+                    print(f"Error: {property_response.status_code}")
+                    print(property_response.text)
+                p = WSConnection()
+                p.process_record(json_data, tenant, city)
+            except Exception as ee:
+                print("kafka problem, wait and retry")
+                time.sleep(0.5)
+                continue
 
 
 

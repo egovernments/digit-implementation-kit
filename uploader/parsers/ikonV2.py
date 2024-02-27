@@ -169,7 +169,7 @@ class IkonPropertyV2(Property):
         #     func(self, context)
         # else:
         #     raise Exception("No Mapping function")
-        financial_year = context["session"].replace("-20", "-")
+      #  financial_year = context["session"].replace("-20", "-")
         self.process_owner_information(context)
         self.process_exemption(context)
         self.process_property_type(context)
