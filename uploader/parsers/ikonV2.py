@@ -20,148 +20,155 @@ class IkonPropertyV2(Property):
         #})]
 
     def process_additional_details(self, context):
-        self.old_property_id = "RID{}".format(context["returnid"])
-        self.survey_id = context["propertyuid"]
+        self.old_property_id = "PENDINGWS"
+        self.survey_id = "PENDINGWS"
 
         self.additional_details = {
             "legacyInfo": {
-                "returnid": context["returnid"],
-                "propertyuid": context["propertyuid"],
-                "session": context["session"],
-                "taxamt": context["taxamt"],
-                "acknowledgementno": context["acknowledgementno"],
-                "colony": context["colony"],
-                "sector": context["sector"],
-                "exemptioncategory": context["exemptioncategory"],
-                "totalcoveredarea": context["totalcoveredarea"],
-                "grosstax": context["grosstax"]
-                #,
-                #"amountpaid": context["amountpaid"]
+                "ws_consumercode": context["consumercode"],
+                "returnid": "PENDINGWS",
+                "propertyuid": "PENDINGWS",
+                "localityname": context["localityname"],
+                "digit_localityname": context["digit_localityname"],
+                "digit_locality_code": context["digit_locality_code"],
+                "block": context["block"],
+                "plotarea": context["area_in_sqy"],
+                "ownername": context["ownername"],
+                "mobile": context["mobile"],
+                "guardianname": context["guardianname"],
+                "propertyusagetype": context["propertyusagetype"],
+                "service": context["service"],
+                "nooftaps": context["nooftaps"],
+                "ismetered": context["ismetered"],
+                "address": context["streetname"],
+                "wsactive": context["active"]
             }
         }
 
     def process_usage(self, context):
         #pd = self.property_details[0]
-        if context["usage"] == "Vacant Plot":
-            self.property_type = "VACANT"
-            self.no_of_floors = 1
-        else:
-            self.property_type = "BUILTUP"
+        self.property_type = "BUILTUP"
+        # if context["usage"] == "Vacant Plot":
+        #     self.property_type = "VACANT"
+        #     self.no_of_floors = 1
+        # else:
+        #     self.property_type = "BUILTUP"
 
     def process_address(self, context, city):
-        locality = Locality(code=context["new_locality_code"])
-        self.address = Address(city=city, door_no=context["houseno"], locality=locality)
+
+        locality = Locality(code=context["digit_locality_code"])
+        self.address = Address(city=city, door_no=context["streetname"], locality=locality)
 
         if len(self.address.door_no) > 64:
             self.address.door_no = self.address.door_no[:64]
-            self.additional_details["legacyInfo"]["houseno"] = context["houseno"]
+
 
     def process_owner_information(self, context=None):
-        owners = context["owner"]
+        #owners = context["owner"]
+        #for name, father_name, mobile in parse_owners_information(owners):
+        owner = Owner(name=context["ownername"], father_or_husband_name=context["guardianname"], mobile_number=context["mobile"])
+        owner.relationship = context["guardian"]
+        if owner.relationship == 'Father':
+            owner.gender = 'Male'
+        else:
+            owner.gender = 'Female'
 
-        for name, father_name, mobile in parse_owners_information(owners):
-            owner = Owner(name=name, father_or_husband_name=father_name, mobile_number=mobile)
-
-            if 'W/O' in name:
-                name, father_name = list(map(str.strip, name.split('W/O')))
-                father_name = 'W/O ' + father_name
-            elif 'D/O' in name:
-                name, father_name = list(map(str.strip, name.split('D/O')))
-                father_name = 'D/O ' + father_name
-            elif 'S/O' in name:
-                name, father_name = list(map(str.strip, name.split('S/O')))
-                father_name = 'S/O ' + father_name
-
-            if 'W/O' in father_name:
-                owner.relationship = 'HUSBAND'
-                owner.gender = 'Female'
-            else:
-                owner.relationship = 'FATHER'
-                owner.gender = 'Male'
-
-            owner.owner_type = 'NONE'
-
-            self.owners.append(owner)
-            #print("owner processed ..")
-
-            #if self.property_details[0].citizen_info is None:
-            #    self.property_details[0].citizen_info = CitizenInfo(name=
-            #                                                        name, mobile_number=mobile)
+        owner.owner_type = 'NONE'
+        self.owners.append(owner)
 
     def process_floor_information(self, context):
-        self.build_up_area = context["totalcoveredarea"]
-        floors=None
-        if context["floor"]:
-            floors = context["floor"].strip()
+        self.property_type = "BUILTUP"
+        self.build_up_area = float(context["area_in_sqy"])*9
+        self.no_of_floors=1
+        self.land_area = context["area_in_sqy"]
+        self.units = []
+        construction_detail = ConstructionDetail(built_up_area=float(context["area_in_sqy"]) )
+        usage=context["propertyusagetype"]
+
+        unit = Unit(floor_no=1,
+                    occupancy_type="SELFOCCUPIED",
+                    construction_detail=construction_detail)
+        if usage == "RESIDENTIAL":
+            unit.usage_category_major = "RESIDENTIAL"
+            unit.usage_category = "RESIDENTIAL"
+        else:
+            unit.usage_category_major = "NONRESIDENTIAL"
+            unit.usage_category = "NONRESIDENTIAL"
+
+        floor_set = set()
+        building_category = context["propertyusagetype"]
+
+        #if context["floor"]:
+        #    floors = context["floor"].strip()
 
         #pd: PropertyDetail = self.property_details[0]
-        self.units = []
 
-        if floors == 'Â' or floors == '' or floors is None:
-            self.property_type = "VACANT"
-            self.no_of_floors = 1
-            self.land_area = context["plotarea"]
+
+        # if floors == 'Â' or floors == '' or floors is None:
+        #     self.property_type = "VACANT"
+        #     self.no_of_floors = 1
+        #     self.land_area = context["plotarea"]
+        # else:
+        #     self.property_type = "BUILTUP"
+        #     floor_set = set()
+        #
+        #     building_category = context["buildingcategory"]
+        #
+        #     for floor, covered_area, usage, occupancy, _, tax in parse_flat_information(context["floor"]):
+        #         if "- VACANT" in floor.upper():
+        #             continue   # to skip any vacant area on floor (Basicaly ...Ground Floor - Vacant... floors are not to be added and assumed to be calculated automaticaly)
+        #         construction_detail=ConstructionDetail(built_up_area=float(context["area_in_sqy"]) / 9)
+        #         unit = Unit(floor_no=get_floor_number(floor),
+        #                     occupancy_type=OC_MAP[occupancy],
+        #                     construction_detail=construction_detail)
+        #
+        #         if OC_MAP[occupancy] == "RENTED":
+        #             unit.arv = round(float(tax) * (100 / 7.5), 2)
+        #
+        #             if unit.arv == 0:
+        #                 unit.arv = None
+        #                 unit.occupancy_type = "UNOCCUPIED"
+        #
+        floor_set.add("1")
+
+        if usage == "RESIDENTIAL":
+            unit.usage_category_major = "RESIDENTIAL"
+            unit.usage_category="RESIDENTIAL"
         else:
-            self.property_type = "BUILTUP"
-            floor_set = set()
+            unit.usage_category_major = "NONRESIDENTIAL"
+            unit.usage_category="NONRESIDENTIAL"
 
-            building_category = context["buildingcategory"]
+        if building_category in BD_UNIT_MAP:
+            unit.usage_category_minor, unit.usage_category_sub_minor, unit.usage_category_detail = \
+            BD_UNIT_MAP[building_category]
+        else:
+            unit.usage_category_minor = "COMMERCIAL"
+            unit.usage_category_sub_minor = "OTHERCOMMERCIALSUBMINOR"
+            unit.usage_category_detail = "OTHERCOMMERCIAL"
 
-            for floor, covered_area, usage, occupancy, _, tax in parse_flat_information(context["floor"]):
-                if "- VACANT" in floor.upper():
-                    continue   # to skip any vacant area on floor (Basicaly ...Ground Floor - Vacant... floors are not to be added and assumed to be calculated automaticaly)
-                construction_detail=ConstructionDetail(built_up_area=float(covered_area) / 9)
-                unit = Unit(floor_no=get_floor_number(floor),
-                            occupancy_type=OC_MAP[occupancy],
-                            construction_detail=construction_detail)
+        #according to V2 usageCategory has Dot (.) seperated usage categories
+        unit.usage_category = unit.usage_category_major
+        if unit.usage_category_minor is not None:
+            unit.usage_category = unit.usage_category +"."+unit.usage_category_minor
+        if unit.usage_category_sub_minor is not None:
+            unit.usage_category = unit.usage_category + "." + unit.usage_category_sub_minor
+        if unit.usage_category_detail is not None:
+            unit.usage_category = unit.usage_category + "." + unit.usage_category_detail
 
-                if OC_MAP[occupancy] == "RENTED":
-                    unit.arv = round(float(tax) * (100 / 7.5), 2)
+        self.units.append(unit)
 
-                    if unit.arv == 0:
-                        unit.arv = None
-                        unit.occupancy_type = "UNOCCUPIED"
+        self.no_of_floors = len(floor_set)
 
-                floor_set.add(get_floor_number(floor))
-
-                if usage == "Residential":
-                    unit.usage_category_major = "RESIDENTIAL"
-                    unit.usage_category="RESIDENTIAL"
-                else:
-                    unit.usage_category_major = "NONRESIDENTIAL"
-                    unit.usage_category="NONRESIDENTIAL"
-
-                    if building_category in BD_UNIT_MAP:
-                        unit.usage_category_minor, unit.usage_category_sub_minor, unit.usage_category_detail = \
-                            BD_UNIT_MAP[building_category]
-                    else:
-                        unit.usage_category_minor = "COMMERCIAL"
-                        unit.usage_category_sub_minor = "OTHERCOMMERCIALSUBMINOR"
-                        unit.usage_category_detail = "OTHERCOMMERCIAL"
-
-                #according to V2 usageCategory has Dot (.) seperated usage categories
-                unit.usage_category = unit.usage_category_major
-                if unit.usage_category_minor is not None:
-                    unit.usage_category = unit.usage_category +"."+unit.usage_category_minor
-                if unit.usage_category_sub_minor is not None:
-                    unit.usage_category = unit.usage_category + "." + unit.usage_category_sub_minor
-                if unit.usage_category_detail is not None:
-                    unit.usage_category = unit.usage_category + "." + unit.usage_category_detail
-
-                self.units.append(unit)
-
-            self.no_of_floors = len(floor_set)
-
-            if len(floor_set) == 1 and "0" not in floor_set:
-                self.property_sub_type = "SHAREDPROPERTY"
-                self.property_type=self.property_type+"."+self.property_sub_type
-                self.no_of_floors = 2
-                self.build_up_area = context["plotarea"]
-                self.land_area = context["plotarea"]    # added and this line was not in V1, land_area was giving error for None type
-            else:
-                self.property_sub_type = "INDEPENDENTPROPERTY"
-                self.property_type = self.property_type + "." + self.property_sub_type
-                self.land_area = context["plotarea"]
+        # if len(floor_set) == 1 and "0" not in floor_set:
+        #         self.property_sub_type = "SHAREDPROPERTY"
+        #         self.property_type=self.property_type+"."+self.property_sub_type
+        #         self.no_of_floors = 2
+        #         self.build_up_area = context["plotarea"]
+        #         self.land_area = context["plotarea"]    # added and this line was not in V1, land_area was giving error for None type
+        #     else:
+        self.property_sub_type = "INDEPENDENTPROPERTY"
+        self.property_type = self.property_type + "." + self.property_sub_type
+        self.land_area = context["area_in_sqy"]
 
     def process_record(self, context, tenantid, city, financial_year="2019-20"):
         # func = BC_MAP[context["BuildingCategory"]]
@@ -169,7 +176,7 @@ class IkonPropertyV2(Property):
         #     func(self, context)
         # else:
         #     raise Exception("No Mapping function")
-        financial_year = context["session"].replace("-20", "-")
+        #financial_year = context["session"].replace("-20", "-")
         self.process_owner_information(context)
         self.process_exemption(context)
         self.process_property_type(context)
@@ -185,14 +192,16 @@ class IkonPropertyV2(Property):
         pass
 
     def process_property_type(self, context):
-        property_type = context['propertytype']
+        property_type = context['propertyusagetype']
 
         PT_MAP = {
             "Mix-Use": "MIXED",
+            "RESIDENTIAL": "RESIDENTIAL",
             "Residential": "RESIDENTIAL",
             "0": "RESIDENTIAL",
             "Industrial": "NONRESIDENTIAL",
-            "Non-Residential": "NONRESIDENTIAL"
+            "Non-Residential": "NONRESIDENTIAL",
+            "COMMERCIAL": "NONRESIDENTIAL"
         }
         self.usage_category_minor = "None"
         self.usage_category_minor = None
@@ -201,66 +210,71 @@ class IkonPropertyV2(Property):
 
     def process_ownershiptype(self, context):
         #pd = self.property_details[0]
-        land_type = context["landusedtype"]
-
-        ONC_MAP = {
-            "The building and land of Hospitals or Dispensaries owned by the State Government": (
-                "INSTITUTIONALGOVERNMENT", "STATEGOVERNMENT"),
-            "The building and land owned and used by the Corporation": ("INSTITUTIONALPRIVATE", "PRIVATECOMPANY"),
-            "The building and land used for Schools and Colleges owned or aided by the State Government": (
-                "INSTITUTIONALGOVERNMENT", "STATEGOVERNMENT")
-        }
-
-        # INSTITUTIONALPRIVATE, PRIVATECOMPANY
-        # INSTITUTIONALPRIVATE, NGO
-        # INSTITUTIONALPRIVATE, PRIVATETRUST
-        # INSTITUTIONALPRIVATE, PRIVATEBOARD
-        # OTHERSPRIVATEINSTITUITION,
-        #
-        # INSTITUTIONALGOVERNMENT, STATEGOVERNMENT
-        # OTHERGOVERNMENTINSTITUITION
-        # CENTRALGOVERNMENT
-
-        #pd.ownership_category = "INDIVIDUAL"
+        self.sub_ownership_category = "SINGLEOWNER"
         self.ownership_category = "INDIVIDUAL"
-
-        if len(self.owners) > 1:
-            self.sub_ownership_category = "MULTIPLEOWNERS"
-            self.ownership_category=self.ownership_category + "." + self.sub_ownership_category  # For v2 properties
-        else:
-            if land_type in ONC_MAP:
-                self.ownership_category = ONC_MAP[land_type][0]
-                self.sub_ownership_category = ONC_MAP[land_type][1]
-                self.ownership_category = self.ownership_category + "." + self.sub_ownership_category  # for v2 properties
-
-                self.institution = Institution("UNKNOWN", self.sub_ownership_category, "UNKNOWN")
-                for o in self.owners:
-                    o.designation = "Designation"
-                    o.alt_contact_number = "91234567890"
-            else:
-                self.sub_ownership_category = "SINGLEOWNER"
-                self.ownership_category = self.ownership_category + "." + self.sub_ownership_category  # for v2 properties
+        self.ownership_category = self.ownership_category + "." + self.sub_ownership_category  # for v2 properties
+        # land_type = context["landusedtype"]
+        #
+        # ONC_MAP = {
+        #     "The building and land of Hospitals or Dispensaries owned by the State Government": (
+        #         "INSTITUTIONALGOVERNMENT", "STATEGOVERNMENT"),
+        #     "The building and land owned and used by the Corporation": ("INSTITUTIONALPRIVATE", "PRIVATECOMPANY"),
+        #     "The building and land used for Schools and Colleges owned or aided by the State Government": (
+        #         "INSTITUTIONALGOVERNMENT", "STATEGOVERNMENT")
+        # }
+        #
+        # # INSTITUTIONALPRIVATE, PRIVATECOMPANY
+        # # INSTITUTIONALPRIVATE, NGO
+        # # INSTITUTIONALPRIVATE, PRIVATETRUST
+        # # INSTITUTIONALPRIVATE, PRIVATEBOARD
+        # # OTHERSPRIVATEINSTITUITION,
+        # #
+        # # INSTITUTIONALGOVERNMENT, STATEGOVERNMENT
+        # # OTHERGOVERNMENTINSTITUITION
+        # # CENTRALGOVERNMENT
+        #
+        # #pd.ownership_category = "INDIVIDUAL"
+        # self.ownership_category = "INDIVIDUAL"
+        #
+        # if len(self.owners) > 1:
+        #     self.sub_ownership_category = "MULTIPLEOWNERS"
+        #     self.ownership_category=self.ownership_category + "." + self.sub_ownership_category  # For v2 properties
+        # else:
+        #     if land_type in ONC_MAP:
+        #         self.ownership_category = ONC_MAP[land_type][0]
+        #         self.sub_ownership_category = ONC_MAP[land_type][1]
+        #         self.ownership_category = self.ownership_category + "." + self.sub_ownership_category  # for v2 properties
+        #
+        #         self.institution = Institution("UNKNOWN", self.sub_ownership_category, "UNKNOWN")
+        #         for o in self.owners:
+        #             o.designation = "Designation"
+        #             o.alt_contact_number = "91234567890"
+        #     else:
+        #         self.sub_ownership_category = "SINGLEOWNER"
+        #         self.ownership_category = self.ownership_category + "." + self.sub_ownership_category  # for v2 properties
 
     def process_exemption(self, context):
-        EC_MAP = {
-            "Widows": "WIDOW",
-            "Non-Exempted": "NONE",
-            "--select--": "NONE",
-            "Person, who had served, or are serving, in any rank, whether as a combatant or a non-combatant, in the Naval, Military or Air Forces of the Union of India": "DEFENSE",
-            "Joint Owners - Both/All Widows": "WIDOW",
-            "Handicapped": "HANDICAPPED",
-            "Freedom Fighters": "FREEDOMFIGHTER",
-            "BPL": "BPL",
-            "Non Govt. Aided Education Organizations":"NONE"
-        }
-
-        ecat = context["exemptioncategory"]
-
-        if ecat == "Joint Owners - Both/All Widows":
-            for owner in self.owners:
-                owner.owner_type = "WIDOW"
-        else:
-            self.owners[0].owner_type = EC_MAP[ecat]
+        for owner in self.owners:
+            owner.owner_type = "NONE"
+        # EC_MAP = {
+        #     "Widows": "WIDOW",
+        #     "Non-Exempted": "NONE",
+        #     "--select--": "NONE",
+        #     "Person, who had served, or are serving, in any rank, whether as a combatant or a non-combatant, in the Naval, Military or Air Forces of the Union of India": "DEFENSE",
+        #     "Joint Owners - Both/All Widows": "WIDOW",
+        #     "Handicapped": "HANDICAPPED",
+        #     "Freedom Fighters": "FREEDOMFIGHTER",
+        #     "BPL": "BPL",
+        #     "Non Govt. Aided Education Organizations":"NONE"
+        # }
+        #
+        # ecat = context["exemptioncategory"]
+        #
+        # if ecat == "Joint Owners - Both/All Widows":
+        #     for owner in self.owners:
+        #         owner.owner_type = "WIDOW"
+        # else:
+        #     self.owners[0].owner_type = EC_MAP[ecat]
 
     def correct_mobile_number(self, context):
         #pd = self.property_details[0]
@@ -318,6 +332,7 @@ OC_MAP = {
 
 BD_UNIT_MAP = {
     "Residential Houses": (None, None, None),
+    "RESIDENTIAL": (None, None, None),
     # "Government buildings, including buildings of Government Undertakings, Board or Corporation": "",
     "Industrial (any manufacturing unit), educational institutions, and godowns": (
         "INDUSTRIAL", "OTHERINDUSTRIALSUBMINOR", "OTHERINDUSTRIAL"),

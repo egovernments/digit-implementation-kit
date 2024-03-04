@@ -279,7 +279,7 @@ class Property:
             },
             "Property": self.get_property_json()
         }
-        # print(json.dumps(request_data, indent=2))
+        #print(json.dumps(request_data, indent=2))
         response = requests.post(
             urljoin(config.HOST, "/property-services/property/_create?tenantId="),
             json=request_data)
