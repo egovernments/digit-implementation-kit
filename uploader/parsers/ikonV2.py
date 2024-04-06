@@ -40,6 +40,7 @@ class IkonPropertyV2(Property):
                 "service": context["service"],
                 "nooftaps": context["nooftaps"],
                 "ismetered": context["ismetered"],
+                "meterno":context["meterno"],
                 "address": context["streetname"],
                 "wsactive": context["active"]
             }
@@ -88,7 +89,7 @@ class IkonPropertyV2(Property):
         unit = Unit(floor_no=1,
                     occupancy_type="SELFOCCUPIED",
                     construction_detail=construction_detail)
-        if usage == "RESIDENTIAL":
+        if usage == "RESIDENTIAL" or usage == "Residential":
             unit.usage_category_major = "RESIDENTIAL"
             unit.usage_category = "RESIDENTIAL"
         else:
@@ -131,7 +132,7 @@ class IkonPropertyV2(Property):
         #
         floor_set.add("1")
 
-        if usage == "RESIDENTIAL":
+        if usage == "RESIDENTIAL" or usage=="Residential":
             unit.usage_category_major = "RESIDENTIAL"
             unit.usage_category="RESIDENTIAL"
         else:
@@ -201,7 +202,8 @@ class IkonPropertyV2(Property):
             "0": "RESIDENTIAL",
             "Industrial": "NONRESIDENTIAL",
             "Non-Residential": "NONRESIDENTIAL",
-            "COMMERCIAL": "NONRESIDENTIAL"
+            "COMMERCIAL": "NONRESIDENTIAL",
+            "Commercial": "NONRESIDENTIAL"
         }
         self.usage_category_minor = "None"
         self.usage_category_minor = None
@@ -333,6 +335,7 @@ OC_MAP = {
 BD_UNIT_MAP = {
     "Residential Houses": (None, None, None),
     "RESIDENTIAL": (None, None, None),
+    "Residential": (None, None, None),
     # "Government buildings, including buildings of Government Undertakings, Board or Corporation": "",
     "Industrial (any manufacturing unit), educational institutions, and godowns": (
         "INDUSTRIAL", "OTHERINDUSTRIALSUBMINOR", "OTHERINDUSTRIAL"),
